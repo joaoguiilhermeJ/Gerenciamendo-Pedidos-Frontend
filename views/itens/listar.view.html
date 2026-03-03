@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Itens Pedidos</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/pedido.css">
+</head>
+
+<body>
+    <div class="container fade-in">
+        <header>
+            <h1>Gerenciamento de Pedidos</h1>
+            <nav>
+                <ul>
+                    <li><a href="/index.html">Início</a></li>
+                    <li><a href="/views/pedidos/listar.view.html">Pedidos</a></li>
+                    <li><a href="/views/produtos/listar.view.html">Produtos</a></li>
+                    <li><a href="/views/clientes/listar.view.html">Clientes</a></li>
+                    <li><a href="/views/itens/listar.view.html" class="active">Itens Pedidos</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <section class="pedidos-section">
+                <div class="section-header">
+                    <h2>Histórico Geral de Itens Vendidos</h2>
+                </div>
+
+                <div id="loading" class="loader">Carregando itens...</div>
+
+                <div class="table-container" id="table-container" style="display: none;">
+                    <table class="table table-itens">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Pedido</th>
+                                <th>Produto</th>
+                                <th>Qtd</th>
+                                <th>Valor Unit.</th>
+                                <th>Total Item</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-itens-corpo">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <p>Nenhum item vendido ainda.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Sistema de Gerenciamento de Pedidos. Todos os direitos reservados.</p>
+        </footer>
+    </div>
+
+    <script type="module">
+        import apiService from '/js/api.service.js';
+
+        async function carregarItens() {
+            const loading = document.getElementById('loading');
+            const tableContainer = document.getElementById('table-container');
+            const emptyState = document.getElementById('empty-state');
+            const tbody = document.getElementById('tabela-itens-corpo');
+
+            try {
+                // assumindo que apiService.listarItensVendidos() ou algo similar existe.
+                // Vou verificar apiService novamente.
+                // Na verdade, apiService.js (Step 19) NÃO TEM listarItensVendidos.
+                // Mas itens/listar.view.html original usava uma variável 'itens'.
+                // Vou usar apiService.listarPedidos() e extrair os itens, ou verificar se há um endpoint de itens.
+
+                // Verificando api.service.js novamente... 
+                // Não tem listarItens. 
+                // Mas o backend pode ter. 
+                // Por enquanto vou tentar buscar de todos os pedidos e aplanar.
+
+                const pedidos = await apiService.listarPedidos();
+                const todosItens = [];
+
+                pedidos.forEach(p => {
+                    if (p.itens) {
+                        p.itens.forEach(item => {
+                            todosItens.push({
+                                ...item,
+                                Pedido: p
+                            });
+                        });
+                    }
+                });
+
+                loading.style.display = 'none';
+
+                if (todosItens.length > 0) {
+                    tableContainer.style.display = 'block';
+                    tbody.innerHTML = todosItens.map(item => {
+                        const data = item.Pedido ? new Date(item.Pedido.createdAt).toLocaleDateString('pt-BR') : 'N/A';
+                        const valorTotal = Number(item.quantidade * (item.precoUnitario || 0)).toFixed(2);
+                        const status = item.Pedido ? item.Pedido.status : 'PENDENTE';
+                        const isEntregue = status === 'ENTREGUE';
+
+                        return `
+                            <tr>
+                                <td>${data}</td>
+                                <td>#${item.idPedido}</td>
+                                <td>Produto #${item.idProduto}</td>
+                                <td>${item.quantidade}</td>
+                                <td>R$ ${Number(item.precoUnitario || 0).toFixed(2)}</td>
+                                <td>R$ ${valorTotal}</td>
+                                <td>
+                                    <span class="status status-${status.toLowerCase()}">
+                                        ${status}
+                                    </span>
+                                </td>
+                                <td>
+                                    ${status === 'PENDENTE' ? `
+                                        <button class="btn btn-success btn-small confirm-btn" 
+                                            data-id="${item.idPedido}">
+                                            Confirmar Entrega
+                                        </button>
+                                    ` : '-'}
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+
+                    adicionarListenersEntrega();
+                } else {
+                    emptyState.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                loading.textContent = 'Erro ao carregar itens: ' + error.message;
+            }
+        }
+
+        function adicionarListenersEntrega() {
+            document.querySelectorAll('.confirm-btn').forEach(btn => {
+                btn.addEventListener('click', async function () {
+                    const id = this.dataset.id;
+                    if (confirm(`Confirmar entrega do pedido #${id}?`)) {
+                        try {
+                            await apiService.entregarPedido(id);
+                            alert('Entrega confirmada!');
+                            location.reload();
+                        } catch (error) {
+                            alert('Erro: ' + error.message);
+                        }
+                    }
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', carregarItens);
+    </script>
+</body>
+
+</html>

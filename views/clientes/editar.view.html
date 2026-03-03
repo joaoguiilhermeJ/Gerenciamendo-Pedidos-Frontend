@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Cliente</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/cliente.css">
+</head>
+
+<body>
+    <div class="container fade-in">
+        <header>
+            <h1>Gerenciamento de Pedidos</h1>
+            <nav>
+                <ul>
+                    <li><a href="/index.html">Início</a></li>
+                    <li><a href="/views/pedidos/listar.view.html">Pedidos</a></li>
+                    <li><a href="/views/produtos/listar.view.html">Produtos</a></li>
+                    <li><a href="/views/clientes/listar.view.html" class="active">Clientes</a></li>
+                    <li><a href="/views/itens/listar.view.html">Itens Pedidos</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <section class="clientes-section">
+                <div class="section-header">
+                    <h2>Editar Cliente #<span id="titulo-id-cliente"></span></h2>
+                </div>
+
+                <form class="form-cliente" id="formCliente">
+                    <div class="form-group">
+                        <label for="nomeCliente">Nome Completo:</label>
+                        <input type="text" id="nomeCliente" name="nomeCliente" required
+                            placeholder="Digite o nome do cliente">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contato">E-mail:</label>
+                            <input type="email" id="contato" name="contato" required
+                                placeholder="Ex: exemplo@email.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="documento">CPF/CNPJ:</label>
+                            <input type="text" id="documento" name="documento" required
+                                placeholder="Digite o documento">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                        <a href="/views/clientes/listar.view.html" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Sistema de Gerenciamento de Pedidos. Todos os direitos reservados.</p>
+        </footer>
+    </div>
+
+    <script type="module">
+        import apiService from '/js/api.service.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const idCliente = urlParams.get('id');
+
+            if (!idCliente) {
+                alert('ID do cliente não informado');
+                window.location.href = '/views/clientes/listar.view.html';
+                return;
+            }
+
+            try {
+                const cliente = await apiService.buscarCliente(idCliente);
+
+                document.getElementById('titulo-id-cliente').textContent = cliente.idCliente;
+                document.getElementById('nomeCliente').value = cliente.nomeCliente || '';
+                document.getElementById('contato').value = cliente.contato || '';
+                document.getElementById('documento').value = cliente.documento || '';
+
+                document.getElementById('formCliente').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const dados = {
+                        nomeCliente: document.getElementById('nomeCliente').value,
+                        contato: document.getElementById('contato').value,
+                        documento: document.getElementById('documento').value
+                    };
+
+                    try {
+                        await apiService.atualizarCliente(idCliente, dados);
+                        alert('Cliente atualizado com sucesso!');
+                        window.location.href = '/views/clientes/listar.view.html';
+                    } catch (error) {
+                        alert('Erro ao atualizar: ' + error.message);
+                    }
+                });
+
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao carregar cliente: ' + error.message);
+            }
+        });
+    </script>
+</body>
+
+</html>

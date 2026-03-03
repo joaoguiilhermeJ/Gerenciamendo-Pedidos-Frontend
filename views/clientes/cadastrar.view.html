@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Cliente</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/cliente.css">
+</head>
+
+<body>
+    <div class="container fade-in">
+        <header>
+            <h1>Gerenciamento de Pedidos</h1>
+            <nav>
+                <ul>
+                    <li><a href="/index.html">Início</a></li>
+                    <li><a href="/views/pedidos/listar.view.html">Pedidos</a></li>
+                    <li><a href="/views/produtos/listar.view.html">Produtos</a></li>
+                    <li><a href="/views/clientes/listar.view.html" class="active">Clientes</a></li>
+                    <li><a href="/views/itens/listar.view.html">Itens Pedidos</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <section class="clientes-section">
+                <div class="section-header">
+                    <h2>Cadastrar Novo Cliente</h2>
+                </div>
+
+                <form class="form-cliente" id="formCliente">
+                    <div class="form-group">
+                        <label for="nomeCliente">Nome Completo:</label>
+                        <input type="text" id="nomeCliente" name="nomeCliente" required
+                            placeholder="Digite o nome do cliente">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contato">E-mail:</label>
+                            <input type="email" id="contato" name="contato" required
+                                placeholder="Ex: exemplo@email.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="documento">CPF/CNPJ:</label>
+                            <input type="text" id="documento" name="documento" required
+                                placeholder="Digite o documento">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Salvar Cliente</button>
+                        <a href="/views/clientes/listar.view.html" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Sistema de Gerenciamento de Pedidos. Todos os direitos reservados.</p>
+        </footer>
+    </div>
+
+    <script type="module">
+        import apiService from '/js/api.service.js';
+
+        document.getElementById('formCliente').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const dados = {
+                nomeCliente: formData.get('nomeCliente'),
+                contato: formData.get('contato'),
+                documento: formData.get('documento')
+            };
+
+            try {
+                await apiService.criarCliente(dados);
+                alert('Cliente cadastrado com sucesso!');
+                document.getElementById('formCliente').reset();
+                window.location.href = '/views/clientes/listar.view.html';
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao cadastrar cliente: ' + error.message);
+            }
+        });
+    </script>
+</body>
+
+</html>
