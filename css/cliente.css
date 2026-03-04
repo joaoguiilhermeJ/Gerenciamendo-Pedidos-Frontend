@@ -23,8 +23,122 @@
     gap: 1.5rem;
 }
 
+/* RESPONSIVIDADE MOBILE */
 @media (max-width: 768px) {
+    .clientes-section {
+        padding: 1rem 0;
+    }
+
+    .table-clientes th, .table-clientes td {
+        padding: 10px;
+        font-size: 13px;
+    }
+
+    .table-clientes .actions {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+    .table-clientes .actions .btn {
+        padding: 5px 8px;
+        font-size: 10px;
+    }
+
+    .form-cliente {
+        padding: 1.5rem;
+    }
+
     .form-group-inline {
         grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .clientes-section {
+        padding: 0.5rem 0;
+    }
+
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-clientes {
+        font-size: 12px;
+        min-width: 350px;
+    }
+
+    .table-clientes th, .table-clientes td {
+        padding: 8px;
+    }
+
+    .table-clientes .actions {
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .table-clientes .actions .btn {
+        width: 100%;
+        padding: 6px;
+        font-size: 10px;
+    }
+
+    .form-cliente {
+        padding: 1rem;
+        margin: 0 auto;
+    }
+
+    .form-group-inline {
+        gap: 0.75rem;
+    }
+}
+
+/* RESPONSIVIDADE ULTRA MOBILE (até 300px) */
+@media (max-width: 300px) {
+    .clientes-section {
+        padding: 0.25rem 0;
+    }
+
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-clientes {
+        font-size: 9px;
+        min-width: 280px;
+    }
+
+    .table-clientes th, .table-clientes td {
+        padding: 4px;
+        font-size: 8px;
+    }
+
+    .table-clientes th {
+        font-weight: 600;
+    }
+
+    .table-clientes .actions {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .table-clientes .actions .btn {
+        width: 100%;
+        padding: 3px;
+        font-size: 7px;
+        margin-bottom: 2px;
+    }
+
+    .form-cliente {
+        padding: 8px;
+        border-radius: 6px;
+    }
+
+    .form-group-inline {
+        grid-template-columns: 1fr;
+        gap: 6px;
     }
 }

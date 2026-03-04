@@ -41,6 +41,89 @@
     justify-content: center;
 }
 
+/* RESPONSIVIDADE MOBILE */
+@media (max-width: 768px) {
+    .table-produtos {
+        font-size: 13px;
+    }
+
+    .table-produtos th,
+    .table-produtos td {
+        padding: 10px;
+    }
+
+    .table-produtos .actions {
+        gap: 4px;
+    }
+
+    .table-produtos .actions .btn {
+        padding: 5px 8px;
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-produtos {
+        font-size: 12px;
+        min-width: 400px;
+    }
+
+    .table-produtos th,
+    .table-produtos td {
+        padding: 8px;
+    }
+
+    .table-produtos .actions {
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .table-produtos .actions .btn {
+        width: 100%;
+        padding: 6px;
+        font-size: 10px;
+    }
+}
+
+/* RESPONSIVIDADE ULTRA MOBILE (até 300px) */
+@media (max-width: 300px) {
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-produtos {
+        font-size: 9px;
+        min-width: 280px;
+    }
+
+    .table-produtos th,
+    .table-produtos td {
+        padding: 4px;
+    }
+
+    .table-produtos th {
+        font-size: 8px;
+    }
+
+    .table-produtos .actions {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .table-produtos .actions .btn {
+        width: 100%;
+        padding: 3px;
+        font-size: 7px;
+        margin-bottom: 2px;
+    }
+}
+
 /* Status de Produtos */
 .table-produtos .status {
     font-size: 11px;
@@ -82,6 +165,28 @@
 
 .form-produto textarea {
     min-height: 100px;
+}
+
+/* RESPONSIVIDADE MOBILE */
+@media (max-width: 768px) {
+    .form-produto .form-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-produto {
+        padding: 15px;
+    }
+
+    .form-produto .form-row {
+        gap: 12px;
+    }
+
+    .form-produto textarea {
+        min-height: 80px;
+    }
 }
 
 /* Checkbox Group */
