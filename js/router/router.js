@@ -1,249 +1,192 @@
-const routes = [
-  {
-    path: "/",
+/**
+ * SPA Router for Gerenciamento de Pedidos
+ */
+
+const routes = {
+  "/": {
     view: "/index.html",
     title: "Gerenciamento de Pedidos - Início",
     isHome: true,
   },
-  {
-    path: "/pedidos",
-    view: "/views/pedidos/listar.view.html",
-    title: "Gerenciamento de Pedidos - Pedidos",
-  },
-  {
-    path: "/produtos",
-    view: "/views/produtos/listar.view.html",
-    title: "Gerenciamento de Pedidos - Produtos",
-  },
-  {
-    path: "/clientes",
+
+  "/clientes": {
     view: "/views/clientes/listar.view.html",
     title: "Gerenciamento de Pedidos - Clientes",
   },
-  {
-    path: "/itens",
-    view: "/views/itens/listar.view.html",
-    title: "Gerenciamento de Pedidos - Itens",
-  },
-  {
-    path: "/pedidos/cadastrar",
-    view: "/views/pedidos/cadastrar.view.html",
-    title: "Gerenciamento de Pedidos - Novo Pedido",
-  },
-  {
-    path: "/produtos/cadastrar",
-    view: "/views/produtos/cadastrar.view.html",
-    title: "Gerenciamento de Pedidos - Novo Produto",
-  },
-  {
-    path: "/clientes/cadastrar",
+  "/clientes/cadastrar": {
     view: "/views/clientes/cadastrar.view.html",
-    title: "Gerenciamento de Pedidos - Novo Cliente",
+    title: "Gerenciamento de Pedidos - Cadastrar Cliente",
   },
-  {
-    path: "/pedidos/editar/:id",
-    view: "/views/pedidos/editar.view.html",
-    title: "Gerenciamento de Pedidos - Editar Pedido",
-  },
-  {
-    path: "/produtos/editar/:id",
-    view: "/views/produtos/editar.view.html",
-    title: "Gerenciamento de Pedidos - Editar Produto",
-  },
-  {
-    path: "/clientes/editar/:id",
+  "/clientes/editar": {
     view: "/views/clientes/editar.view.html",
     title: "Gerenciamento de Pedidos - Editar Cliente",
   },
-  {
-    path: "/pedidos/detalhes/:id",
+
+  "/produtos": {
+    view: "/views/produtos/listar.view.html",
+    title: "Gerenciamento de Pedidos - Produtos",
+  },
+  "/produtos/cadastrar": {
+    view: "/views/produtos/cadastrar.view.html",
+    title: "Gerenciamento de Pedidos - Cadastrar Produto",
+  },
+  "/produtos/editar": {
+    view: "/views/produtos/editar.view.html",
+    title: "Gerenciamento de Pedidos - Editar Produto",
+  },
+
+  "/pedidos": {
+    view: "/views/pedidos/listar.view.html",
+    title: "Gerenciamento de Pedidos - Pedidos",
+  },
+  "/pedidos/cadastrar": {
+    view: "/views/pedidos/cadastrar.view.html",
+    title: "Gerenciamento de Pedidos - Cadastrar Pedido",
+  },
+  "/pedidos/editar": {
+    view: "/views/pedidos/editar.view.html",
+    title: "Gerenciamento de Pedidos - Editar Pedido",
+  },
+  "/pedidos/detalhes": {
     view: "/views/pedidos/detalhes.view.html",
     title: "Gerenciamento de Pedidos - Detalhes do Pedido",
   },
-];
 
-let homeContent = "";
-
-function normalizePathname(pathname) {
-  if (!pathname) return "/";
-  if (pathname !== "/" && pathname.endsWith("/")) return pathname.slice(0, -1);
-  return pathname;
+  "/itens": {
+    view: "/views/itens/listar.view.html",
+    title: "Gerenciamento de Pedidos - Itens",
+  },
 }
 
-function pathToRegex(path) {
-  const pattern =
-    "^" + path.replace(/\//g, "\\/").replace(/:\w+/g, "([^\\/]+)") + "$";
-  return new RegExp(pattern);
+let homeContent = ""
+
+function normalizePath(inputPath) {
+  const url = new URL(inputPath, window.location.origin)
+  let pathname = url.pathname || "/"
+  if (pathname.length > 1) pathname = pathname.replace(/\/$/, "")
+
+  if (pathname.includes("/views/clientes/listar.view.html")) pathname = "/clientes"
+  if (pathname.includes("/views/clientes/cadastrar.view.html")) pathname = "/clientes/cadastrar"
+  if (pathname.includes("/views/clientes/editar.view.html")) pathname = "/clientes/editar"
+
+  if (pathname.includes("/views/produtos/listar.view.html")) pathname = "/produtos"
+  if (pathname.includes("/views/produtos/cadastrar.view.html")) pathname = "/produtos/cadastrar"
+  if (pathname.includes("/views/produtos/editar.view.html")) pathname = "/produtos/editar"
+
+  if (pathname.includes("/views/pedidos/listar.view.html")) pathname = "/pedidos"
+  if (pathname.includes("/views/pedidos/cadastrar.view.html")) pathname = "/pedidos/cadastrar"
+  if (pathname.includes("/views/pedidos/editar.view.html")) pathname = "/pedidos/editar"
+  if (pathname.includes("/views/pedidos/detalhes.view.html")) pathname = "/pedidos/detalhes"
+
+  if (pathname.includes("/views/itens/listar.view.html")) pathname = "/itens"
+  if (pathname.includes("/index.html")) pathname = "/"
+
+  return pathname + (url.search || "")
 }
 
-function getParams(routePath, match) {
-  const keys = Array.from(routePath.matchAll(/:(\w+)/g)).map((m) => m[1]);
-  const values = match.slice(1);
-  const params = {};
-  keys.forEach((k, i) => {
-    params[k] = values[i];
-  });
-  return params;
-}
+async function loadView(path) {
+  const mainContainer = document.querySelector("main")
+  if (!mainContainer) return
 
-function matchRoute(pathname) {
-  const clean = normalizePathname(pathname);
-  for (const r of routes) {
-    const re = pathToRegex(r.path);
-    const match = clean.match(re);
-    if (match) {
-      return {
-        route: r,
-        params: getParams(r.path, match),
-      };
-    }
+  const normalized = normalizePath(path)
+  const url = new URL(normalized, window.location.origin)
+  const pathname = url.pathname
+  const route = routes[pathname]
+
+  if (!route) {
+    window.history.replaceState({}, "", "/")
+    return loadView("/")
   }
-  return null;
-}
 
-function setActiveNav(pathname) {
-  const clean = normalizePathname(pathname);
+  document.title = route.title
+
   document.querySelectorAll("nav a").forEach((link) => {
-    const linkHref = link.getAttribute("href") || "";
-    const linkPath = normalizePathname(linkHref.split("?")[0]);
-    if (
-      linkPath === clean ||
-      (clean.startsWith(linkPath) && linkPath !== "/")
-    ) {
-      link.classList.add("active");
-    } else {
-      link.classList.remove("active");
-    }
-  });
-}
+    const linkPath = normalizePath(link.getAttribute("href") || "/")
+    const linkUrl = new URL(linkPath, window.location.origin)
+    const lp = linkUrl.pathname
+    if (lp === pathname || (pathname.startsWith(lp) && lp !== "/")) link.classList.add("active")
+    else link.classList.remove("active")
+  })
 
-async function loadView(fullPath) {
-  const mainContainer = document.querySelector("main");
-  if (!mainContainer) return;
-  const url = new URL(fullPath, window.location.origin);
-  const pathname = normalizePathname(url.pathname);
-  const search = url.search || "";
-  const matched = matchRoute(pathname);
-  if (!matched) {
-    window.history.replaceState({}, "", "/");
-    return loadView("/");
-  }
-  const { route, params } = matched;
-  window.routeParams = params || {};
-  window.routeQuery = Object.fromEntries(new URLSearchParams(search));
-  document.title = route.title;
-  setActiveNav(pathname);
   if (route.isHome) {
     if (homeContent) {
-      mainContainer.innerHTML = homeContent;
-      return;
+      mainContainer.innerHTML = homeContent
+      return
     }
   }
+
   try {
-    mainContainer.innerHTML = '<div class="loading">Carregando view...</div>';
-    const response = await fetch(route.view, { cache: "no-store" });
-    if (!response.ok)
-      throw new Error(
-        `Falha ao carregar view: ${response.status} ${response.statusText}`,
-      );
-    const html = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-    const newMainContent = doc.querySelector("main");
-    if (newMainContent) mainContainer.innerHTML = newMainContent.innerHTML;
-    else mainContainer.innerHTML = doc.body.innerHTML;
-    document
-      .querySelectorAll("script[data-router-injected='1']")
-      .forEach((s) => s.remove());
-    const scripts = doc.querySelectorAll("script");
-    for (const oldScript of scripts) {
-      const newScript = document.createElement("script");
-      newScript.setAttribute("data-router-injected", "1");
-      Array.from(oldScript.attributes).forEach((attr) => {
-        newScript.setAttribute(attr.name, attr.value);
-      });
-      if (oldScript.src) newScript.src = oldScript.src;
-      else newScript.textContent = oldScript.textContent;
-      document.body.appendChild(newScript);
+    mainContainer.innerHTML = '<div class="loading">Carregando view...</div>'
+
+    const response = await fetch(route.view, { cache: "no-store" })
+    if (!response.ok) throw new Error(`Falha ao carregar view: ${response.status} ${response.statusText}`)
+
+    const html = await response.text()
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, "text/html")
+
+    const newMainContent = doc.querySelector("main")
+    if (newMainContent) {
+      mainContainer.innerHTML = newMainContent.innerHTML
+    } else {
+      const tempDiv = doc.createElement("div")
+      tempDiv.innerHTML = doc.body.innerHTML
+      const scripts = tempDiv.querySelectorAll("script")
+      scripts.forEach((s) => s.remove())
+      mainContainer.innerHTML = tempDiv.innerHTML
     }
-    window.scrollTo(0, 0);
+
+    const scripts = doc.querySelectorAll("script")
+    for (const oldScript of scripts) {
+      const newScript = document.createElement("script")
+      Array.from(oldScript.attributes).forEach((attr) => newScript.setAttribute(attr.name, attr.value))
+      if (oldScript.src) newScript.src = oldScript.src
+      else newScript.textContent = oldScript.textContent
+      document.body.appendChild(newScript)
+    }
+
+    window.scrollTo(0, 0)
   } catch (error) {
-    console.error("Erro de navegação:", error);
-    mainContainer.innerHTML = `<div class="error-container" style="padding:2rem;text-align:center;"><h2 style="color:var(--danger-color, red);">Ops! Algo deu errado.</h2><p>${error.message}</p></div>`;
+    console.error("Erro de navegação:", error)
+    mainContainer.innerHTML = `<div class="error-container" style="padding:2rem;text-align:center;"><h2 style="color:var(--danger-color,red);">Ops! Algo deu errado.</h2><p>${error.message}</p></div>`
   }
 }
 
 function navigate(path) {
-  window.history.pushState({}, "", path);
-  loadView(path);
+  const normalized = normalizePath(path)
+  window.history.pushState({}, "", normalized)
+  loadView(normalized)
 }
 
-window.navigateTo = navigate;
-
-function convertLegacyViewToRoute(hrefNoQuery) {
-  const h = normalizePathname(hrefNoQuery);
-  if (h === "/index.html") return "/";
-  const m = h.match(
-    /^\/views\/(clientes|produtos|pedidos|itens)\/(.+)\.view\.html$/,
-  );
-  if (!m) return null;
-  const section = m[1];
-  const page = m[2];
-  if (page === "listar") return `/${section}`;
-  return `/${section}/${page}`;
-}
+window.navigateTo = navigate
 
 document.addEventListener("click", (e) => {
-  const anchor = e.target.closest("a");
-  if (!anchor) return;
-  const href = anchor.getAttribute("href");
-  if (!href) return;
-  if (
-    href.startsWith("http") ||
-    href.startsWith("//") ||
-    anchor.getAttribute("target") === "_blank" ||
-    href.startsWith("#")
-  )
-    return;
+  const anchor = e.target.closest("a")
+  if (!anchor) return
 
-  const hrefNoQuery = href.split("?")[0];
-  const query = href.includes("?") ? "?" + href.split("?")[1] : "";
-  const normalized = normalizePathname(hrefNoQuery);
+  const href = anchor.getAttribute("href")
+  if (!href) return
+  if (href.startsWith("http") || href.startsWith("//")) return
+  if (anchor.getAttribute("target") === "_blank") return
+  if (href.startsWith("#")) return
+  if (href.startsWith("mailto:") || href.startsWith("tel:")) return
 
-  if (matchRoute(normalized)) {
-    e.preventDefault();
-    return navigate(normalized + query);
+  const normalized = normalizePath(href)
+  const url = new URL(normalized, window.location.origin)
+  const pathname = url.pathname
+
+  if (routes[pathname] || pathname === "/") {
+    e.preventDefault()
+    navigate(normalized)
   }
-
-  const converted = convertLegacyViewToRoute(hrefNoQuery);
-  if (converted && matchRoute(converted)) {
-    e.preventDefault();
-    return navigate(converted + query);
-  }
-
-  if (
-    converted &&
-    (converted.endsWith("/editar") || converted.endsWith("/detalhes"))
-  ) {
-    const qs = new URLSearchParams(query);
-    const id = qs.get("id");
-    if (id) {
-      const target = `${converted}/${id}`;
-      if (matchRoute(target)) {
-        e.preventDefault();
-        return navigate(target);
-      }
-    }
-  }
-});
+})
 
 window.addEventListener("popstate", () => {
-  loadView(window.location.pathname + window.location.search);
-});
+  loadView(window.location.pathname + window.location.search)
+})
 
 document.addEventListener("DOMContentLoaded", () => {
-  const mainContainer = document.querySelector("main");
-  if (mainContainer && window.location.pathname === "/")
-    homeContent = mainContainer.innerHTML;
-  loadView(window.location.pathname + window.location.search);
-});
+  const mainContainer = document.querySelector("main")
+  if (mainContainer && window.location.pathname === "/") homeContent = mainContainer.innerHTML
+  loadView(window.location.pathname + window.location.search)
+})
