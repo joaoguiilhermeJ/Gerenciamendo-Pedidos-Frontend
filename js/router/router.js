@@ -34,7 +34,7 @@ const routes = {
     view: "/views/pedidos/editar.view.html",
     title: "Editar Pedido",
   },
-  "/produtos/editar": {
+  "/produtos/:id/editar": {
     view: "/views/produtos/editar.view.html",
     title: "Editar Produto",
   },
@@ -209,13 +209,26 @@ document.addEventListener("click", (e) => {
   }
 });
 
+// Export and global exposure
+window.navigateTo = navigate;
+
+// Initialization
+function initRouter() {
+  const main = document.querySelector("main");
+  // Capture home content if we are at root
+  if (main && normalizePath("/") === normalizePath(window.location.pathname)) {
+    homeContent = main.innerHTML;
+  }
+  loadView(window.location.pathname + window.location.search);
+}
+
+// Handle race condition where DOMContentLoaded might have already fired
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initRouter);
+} else {
+  initRouter();
+}
+
 window.addEventListener("popstate", () =>
   loadView(window.location.pathname + window.location.search),
 );
-
-document.addEventListener("DOMContentLoaded", () => {
-  const main = document.querySelector("main");
-  if (main && normalizePath("/") === normalizePath(window.location.pathname))
-    homeContent = main.innerHTML;
-  loadView(window.location.pathname + window.location.search);
-});
