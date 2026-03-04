@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listar Itens</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <main>
+    <section class="itens-section">
+      <div class="section-header">
+        <h2>Lista de Itens</h2>
+      </div>
+      <div class="table-container" style="display:none;">
+        <table class="table table-itens"><thead><tr><th>ID</th><th>Pedido</th><th>Produto</th><th>Quantidade</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="empty-state" style="display:none;"><p>Nenhum item encontrado.</p></div>
+    </section>
+  </main>
+  <script type="module">
+    import apiService from '/js/api/api.service.js';
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Implementação mínima para listar itens se endpoint existir no backend
+      try {
+        // Supondo que items venham integrados aos pedidos; isso é um placeholder
+        const pedidos = await apiService.listarPedidos();
+        const tbody = document.querySelector('.table-itens tbody');
+        if (pedidos && pedidos.length > 0) {
+          let html = '';
+          pedidos.forEach(p => {
+            if (p.itens) {
+              p.itens.forEach(item => {
+                html += `<tr><td>${item.id}</td><td>${p.id}</td><td>${item.produtoNome || item.nome}</td><td>${item.quantidade}</td></tr>`;
+              });
+            }
+          });
+          if (tbody) tbody.innerHTML = html;
+        }
+      } catch (error) { console.warn('Itens: não foi possível carregar itens:', error); }
+    });
+  </script>
+</body>
+</html>

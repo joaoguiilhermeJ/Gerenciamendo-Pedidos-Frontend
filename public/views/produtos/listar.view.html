@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listar Produtos</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/produto.css">
+</head>
+<body>
+  <main>
+    <section class="produtos-section">
+      <div class="section-header">
+        <h2>Lista de Produtos</h2>
+        <a href="/produtos/cadastrar" class="btn btn-primary">+ Novo Produto</a>
+      </div>
+
+      <div class="table-container" style="display:none;">
+        <table class="table table-produtos">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>Preço</th>
+              <th>Estoque</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="empty-state" style="display:none;">
+        <p>Nenhum produto cadastrado.</p>
+        <a href="/produtos/cadastrar" class="btn btn-primary">Criar Produto</a>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import apiService from '/js/api/api.service.js';
+    document.addEventListener('DOMContentLoaded', async () => {
+      const tableBody = document.querySelector('.table-produtos tbody');
+      const emptyState = document.querySelector('.empty-state');
+      const tableContainer = document.querySelector('.table-container');
+      try {
+        const produtos = await apiService.listarProdutos();
+        if (produtos && produtos.length > 0) {
+          if (emptyState) emptyState.style.display = 'none';
+          if (tableContainer) tableContainer.style.display = 'block';
+          let html = '';
+          produtos.forEach(p => {
+            html += `
+              <tr>
+                <td>${p.idProduto || p.id}</td>
+                <td>${p.nome}</td>
+                <td>R$ ${p.preco}</td>
+                <td>${p.estoque}</td>
+                <td class="actions">
+                  <a href="/produtos/${p.idProduto || p.id}/editar" class="btn btn-warning btn-small">Editar</a>
+                  <button class="btn btn-danger btn-small delete-btn" data-id="${p.idProduto || p.id}">Deletar</button>
+                </td>
+              </tr>
+            `;
+          });
+          if (tableBody) { tableBody.innerHTML = html; attachDeleteListeners(); }
+        } else { if (tableContainer) tableContainer.style.display = 'none'; if (emptyState) emptyState.style.display = 'block'; }
+      } catch (error) { console.error('Erro ao carregar produtos:', error); alert('Erro ao carregar produtos: ' + error.message); }
+    });
+
+    function attachDeleteListeners() {
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+          const id = this.dataset.id;
+          if (confirm('Confirmar exclusão deste produto?')) {
+            try { await apiService.deletarProduto(id); alert('Produto deletado com sucesso!'); location.reload(); }
+            catch (error) { console.error('Erro:', error); alert('Erro ao deletar produto: ' + error.message); }
+          }
+        });
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listar Pedidos</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/pedido.css">
+</head>
+<body>
+  <main>
+    <section class="pedidos-section">
+      <div class="section-header">
+        <h2>Lista de Pedidos</h2>
+        <a href="/pedidos/cadastrar" class="btn btn-primary">+ Novo Pedido</a>
+      </div>
+
+      <div class="table-container" style="display:none;">
+        <table class="table table-pedidos">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Cliente</th>
+              <th>Total</th>
+              <th>Data</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="empty-state" style="display:none;">
+        <p>Nenhum pedido cadastrado.</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import apiService from '/js/api/api.service.js';
+    document.addEventListener('DOMContentLoaded', async () => {
+      const tableBody = document.querySelector('.table-pedidos tbody');
+      const emptyState = document.querySelector('.empty-state');
+      const tableContainer = document.querySelector('.table-container');
+      try {
+        const pedidos = await apiService.listarPedidos();
+        if (pedidos && pedidos.length > 0) {
+          if (emptyState) emptyState.style.display = 'none';
+          if (tableContainer) tableContainer.style.display = 'block';
+          let html = '';
+          pedidos.forEach(p => {
+            html += `
+              <tr>
+                <td>${p.idPedido || p.id}</td>
+                <td>${p.clienteNome || p.cliente}</td>
+                <td>R$ ${p.total}</td>
+                <td>${p.data}</td>
+                <td class="actions">
+                  <a href="/pedidos/${p.idPedido || p.id}/detalhes" class="btn btn-info btn-small">Detalhes</a>
+                  <a href="/pedidos/${p.idPedido || p.id}/editar" class="btn btn-warning btn-small">Editar</a>
+                </td>
+              </tr>
+            `;
+          });
+          if (tableBody) { tableBody.innerHTML = html; }
+        } else { if (tableContainer) tableContainer.style.display = 'none'; if (emptyState) emptyState.style.display = 'block'; }
+      } catch (error) { console.error('Erro ao carregar pedidos:', error); alert('Erro ao carregar pedidos: ' + error.message); }
+    });
+  </script>
+</body>
+</html>

@@ -1,26 +1,17 @@
-
-
 import API_CONFIG from "./api.config.js";
 
 class APIService {
-  /**
-   
-   * @param {string} url - URL completa do endpoint
-   * @param {object} options - Opções do fetch (method, body, headers extras, etc)
-   * @returns {Promise} Resposta parseada ou erro tratado
-   */
   async request(url, options = {}) {
     try {
       const headers = {
         ...API_CONFIG.getHeaders(),
-        ...options.headers, // permite sobrescrever headers padrão
+        ...options.headers,
       };
 
       const response = await fetch(url, {
         ...options,
         headers,
       });
-
 
       if (!response.ok) {
         const errorData = await response
@@ -34,8 +25,15 @@ class APIService {
       return await response.json();
     } catch (error) {
       console.error("Erro na requisição:", error);
-      if (error instanceof TypeError && (error.message.includes("fetch") || error.message.includes("Network") || error.message.includes("Failed to fetch"))) {
-        throw new Error("Não foi possível conectar ao servidor. O microserviço pode estar fora do ar.");
+      if (
+        error instanceof TypeError &&
+        (error.message.includes("fetch") ||
+          error.message.includes("Network") ||
+          error.message.includes("Failed to fetch"))
+      ) {
+        throw new Error(
+          "Não foi possível conectar ao servidor. O microserviço pode estar fora do ar.",
+        );
       }
       throw error;
     }
@@ -53,7 +51,6 @@ class APIService {
     });
   }
 
-
   async criarCliente(dados) {
     return this.request(API_CONFIG.endpoints.clientes.criar(), {
       method: "POST",
@@ -68,20 +65,17 @@ class APIService {
     });
   }
 
-
   async deletarCliente(id) {
     return this.request(API_CONFIG.endpoints.clientes.deletar(id), {
       method: "DELETE",
     });
   }
 
-
   async listarProdutos() {
     return this.request(API_CONFIG.endpoints.produtos.listar(), {
       method: "GET",
     });
   }
-
 
   async buscarProduto(id) {
     return this.request(API_CONFIG.endpoints.produtos.buscar(id), {
@@ -96,14 +90,12 @@ class APIService {
     });
   }
 
-
   async atualizarProduto(id, dados) {
     return this.request(API_CONFIG.endpoints.produtos.atualizar(id), {
       method: "PUT",
       body: JSON.stringify(dados),
     });
   }
-
 
   async atualizarEstoqueProduto(id, estoque) {
     return this.request(API_CONFIG.endpoints.produtos.atualizarEstoque(id), {
@@ -112,13 +104,11 @@ class APIService {
     });
   }
 
-
   async deletarProduto(id) {
     return this.request(API_CONFIG.endpoints.produtos.deletar(id), {
       method: "DELETE",
     });
   }
-
 
   async listarPedidos() {
     return this.request(API_CONFIG.endpoints.pedidos.listar(), {
@@ -132,9 +122,6 @@ class APIService {
     });
   }
 
-  /**
-   * Cria um novo pedido
-   */
   async criarPedido(dados) {
     return this.request(API_CONFIG.endpoints.pedidos.criar(), {
       method: "POST",
@@ -142,9 +129,6 @@ class APIService {
     });
   }
 
-  /**
-   * Atualiza um pedido existente
-   */
   async atualizarPedido(id, dados) {
     return this.request(API_CONFIG.endpoints.pedidos.atualizar(id), {
       method: "PUT",
@@ -152,9 +136,6 @@ class APIService {
     });
   }
 
-  /**
-   * Cancela um pedido (DELETE)
-   */
   async cancelarPedido(id) {
     return this.request(API_CONFIG.endpoints.pedidos.cancelar(id), {
       method: "DELETE",
@@ -162,17 +143,13 @@ class APIService {
   }
 
   async entregarPedido(id) {
-    return this.request(`${API_CONFIG.endpoints.pedidos.listar()}/${id}/entregar`, {
-      method: 'POST'
-    });
+    return this.request(
+      `${API_CONFIG.endpoints.pedidos.listar()}/${id}/entregar`,
+      { method: "POST" },
+    );
   }
 }
 
-// Cria instância global do serviço
 const apiService = new APIService();
-
-// Exporta para uso em módulos ES6
 export default apiService;
-
-// Também exporta globalmente para uso em scripts inline (template HTML)
 window.apiService = apiService;
