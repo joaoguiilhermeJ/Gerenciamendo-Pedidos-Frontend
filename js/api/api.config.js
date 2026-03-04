@@ -1,13 +1,10 @@
-const rawBaseUrl =
-  (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
-  "https://gp-api-gateway.onrender.com/api/v1";
-
 const rawApiKey =
-  (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_KEY) ||
+  (typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_API_KEY) ||
   "IFPIpantera3324JJM";
 
 const API_CONFIG = {
-  BASE_URL: rawBaseUrl.replace(/\/$/, ""),
   API_KEY: rawApiKey,
 
   getHeaders() {
@@ -20,29 +17,29 @@ const API_CONFIG = {
 
 API_CONFIG.endpoints = {
   clientes: {
-    listar: () => `${API_CONFIG.BASE_URL}/customers`,
-    buscar: (id) => `${API_CONFIG.BASE_URL}/customers/${id}`,
-    criar: () => `${API_CONFIG.BASE_URL}/customers`,
-    atualizar: (id) => `${API_CONFIG.BASE_URL}/customers/${id}`,
-    deletar: (id) => `${API_CONFIG.BASE_URL}/customers/${id}`,
+    listar: () => `https://gp-ms-clientes.onrender.com/clientes`,
+    buscar: (id) => `https://gp-ms-clientes.onrender.com/clientes/${id}`,
+    criar: () => `https://gp-ms-clientes.onrender.com/clientes`,
+    atualizar: (id) => `https://gp-ms-clientes.onrender.com/clientes/${id}`,
+    deletar: (id) => `https://gp-ms-clientes.onrender.com/clientes/${id}`,
   },
 
   produtos: {
-    listar: () => `${API_CONFIG.BASE_URL}/products`,
-    buscar: (id) => `${API_CONFIG.BASE_URL}/products/${id}`,
-    criar: () => `${API_CONFIG.BASE_URL}/products`,
-    atualizar: (id) => `${API_CONFIG.BASE_URL}/products/${id}`,
-    deletar: (id) => `${API_CONFIG.BASE_URL}/products/${id}`,
-    atualizarEstoque: (id) => `${API_CONFIG.BASE_URL}/products/${id}`,
+    listar: () => `https://gp-ms-produtos.onrender.com/produtos`,
+    buscar: (id) => `https://gp-ms-produtos.onrender.com/produtos/${id}`,
+    criar: () => `https://gp-ms-produtos.onrender.com/produtos`,
+    atualizar: (id) => `https://gp-ms-produtos.onrender.com/produtos/${id}`,
+    deletar: (id) => `https://gp-ms-produtos.onrender.com/produtos/${id}`,
+    atualizarEstoque: (id) => `https://gp-ms-produtos.onrender.com/produtos/${id}`,
   },
 
   pedidos: {
-    listar: () => `${API_CONFIG.BASE_URL}/orders`,
-    buscar: (id) => `${API_CONFIG.BASE_URL}/orders/${id}`,
-    criar: () => `${API_CONFIG.BASE_URL}/orders`,
-    atualizar: (id) => `${API_CONFIG.BASE_URL}/orders/${id}`,
-    deletar: (id) => `${API_CONFIG.BASE_URL}/orders/${id}`,
-    cancelar: (id) => `${API_CONFIG.BASE_URL}/orders/${id}`,
+    listar: () => `https://gp-ms-pedidos.onrender.com/pedidos`,
+    buscar: (id) => `https://gp-ms-pedidos.onrender.com/pedidos/${id}`,
+    criar: () => `https://gp-ms-pedidos.onrender.com/pedidos`,
+    atualizar: (id) => `https://gp-ms-pedidos.onrender.com/pedidos/${id}`,
+    deletar: (id) => `https://gp-ms-pedidos.onrender.com/pedidos/${id}`,
+    cancelar: (id) => `https://gp-ms-pedidos.onrender.com/pedidos/${id}`,
   },
 };
 
