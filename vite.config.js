@@ -4,4 +4,9 @@ export default defineConfig({
   root: ".",
   publicDir: "public",
   server: { port: 5173 },
+  build: {
+    rollupOptions: {
+      input: "index.html",
+    },
+  },
 });

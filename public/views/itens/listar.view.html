@@ -44,7 +44,7 @@
         </section>
 
         <script type="module">
-            import apiService from '/js/api/api.service.js';
+            const apiService = window.apiService;
 
             async function carregarItens() {
                 const loading = document.getElementById('loading');

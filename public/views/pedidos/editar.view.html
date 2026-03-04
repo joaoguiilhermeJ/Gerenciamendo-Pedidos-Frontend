@@ -42,7 +42,7 @@
         </section>
 
         <script type="module">
-            import apiService from '/js/api/api.service.js';
+            const apiService = window.apiService;
 
             async function carregarDados() {
                 const loading = document.getElementById('loading-editar-pedido');
