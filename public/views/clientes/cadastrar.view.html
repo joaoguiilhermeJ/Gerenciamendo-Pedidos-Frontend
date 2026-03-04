@@ -47,12 +47,20 @@
 
             try {
                 await apiService.criarCliente(dados);
-                alert('Cliente cadastrado com sucesso!');
-                if (window.navigateTo) window.navigateTo('/clientes');
-                else window.location.href = '/clientes';
+                   alert('Cliente cadastrado com sucesso!');
+                   try {
+                       if (window.navigateTo) {
+                           window.navigateTo('/clientes');
+                       } else {
+                           window.location.href = '/clientes';
+                       }
+                   } catch (navError) {
+                       console.error('Erro ao navegar:', navError);
+                       window.location.href = '/clientes';
+                   }
             } catch (error) {
                 console.error('Erro:', error);
-                alert('Erro ao cadastrar cliente: ' + error.message);
+                   alert('Erro ao cadastrar cliente:\n' + (error?.message || String(error)));
             } finally {
                 btnSalvar.disabled = false;
                 btnSalvar.textContent = 'Salvar Cliente';

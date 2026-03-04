@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,11 +8,12 @@
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/pedido.css">
 </head>
+
 <body>
     <main>
         <section class="pedidos-section">
             <div id="loading-detalhes" class="text-center">Carregando detalhes do pedido...</div>
-            
+
             <div id="conteudoPedido" style="display: none;">
                 <div class="section-header">
                     <h2 id="tituloPedido">Detalhes do Pedido #</h2>
@@ -57,7 +59,8 @@
                                 </tbody>
                             </table>
                         </div>
-                        <p id="noItensMessage" class="empty-state" style="display: none;">Este pedido não possui itens.</p>
+                        <p id="noItensMessage" class="empty-state" style="display: none;">Este pedido não possui itens.
+                        </p>
                     </div>
 
                     <div class="resumo-pedido">
@@ -82,7 +85,7 @@
             async function carregarDetalhes() {
                 const loading = document.getElementById('loading-detalhes');
                 const conteudo = document.getElementById('conteudoPedido');
-                
+
                 const path = window.location.pathname;
                 const segments = path.split('/').filter(Boolean);
                 let orderId = segments[1];
@@ -101,7 +104,7 @@
                         document.getElementById('idPedidoEl').textContent = pedido.idPedido;
                         document.getElementById('clienteNomeEl').textContent = pedido.Cliente ? pedido.Cliente.nomeCliente : (pedido.nomeCliente || 'Cliente #' + pedido.idCliente);
                         document.getElementById('dataPedidoEl').textContent = pedido.horaPedido ? new Date(pedido.horaPedido).toLocaleString('pt-BR') : 'N/A';
-                        
+
                         const statusEl = document.getElementById('statusPedidoEl');
                         if (statusEl) {
                             statusEl.textContent = pedido.horaEntrega ? 'Entregue' : 'Pendente';
@@ -118,7 +121,7 @@
                                 const vUnit = Number(item.valorUnitario || item.valor || 0);
                                 const sub = item.quantidade * vUnit;
                                 tr.innerHTML = `
-                                    <td>${item.produto_nome || item.Produto?.nomeProduto || 'Produto #' + item.idProduto}</td>
+                                    <td>${item.produto_nome || item.Produto?.nome || 'Produto #' + item.idProduto}</td>
                                     <td>${item.quantidade}</td>
                                     <td>R$ ${vUnit.toFixed(2)}</td>
                                     <td>R$ ${sub.toFixed(2)}</td>
@@ -150,9 +153,18 @@
                                     try {
                                         await apiService.cancelarPedido(pedido.idPedido);
                                         alert('Pedido deletado com sucesso!');
-                                        if (window.navigateTo) window.navigateTo('/pedidos');
+                                        try {
+                                            if (window.navigateTo) {
+                                                window.navigateTo('/pedidos');
+                                            } else {
+                                                window.location.href = '/pedidos';
+                                            }
+                                        } catch (navError) {
+                                            console.error('Erro ao navegar:', navError);
+                                            window.location.href = '/pedidos';
+                                        }
                                     } catch (error) {
-                                        alert('Erro ao deletar pedido: ' + error.message);
+                                        alert('Erro ao deletar pedido:\n' + (error?.message || String(error)));
                                     }
                                 }
                             };
@@ -169,6 +181,5 @@
         </script>
     </main>
 </body>
+
 </html>
-
-

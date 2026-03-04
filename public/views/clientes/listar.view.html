@@ -83,7 +83,7 @@
                                         alert('Cliente deletado com sucesso!');
                                         carregarClientes();
                                     } catch (error) {
-                                        alert('Erro ao deletar: ' + error.message);
+                                           alert('Erro ao deletar:\n' + (error?.message || String(error)));
                                     }
                                 }
                             };
@@ -94,7 +94,7 @@
                     }
                 } catch (error) {
                     console.error('Erro:', error);
-                    if (loading) loading.innerHTML = `<p style="color:red">Erro ao carregar: ${error.message}</p>`;
+                       if (loading) loading.innerHTML = `<p style="color:red">Erro ao carregar: ${error?.message || String(error)}</p>`;
                 }
             }
 

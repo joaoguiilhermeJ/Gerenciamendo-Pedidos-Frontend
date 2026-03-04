@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/produto.css">
 </head>
+
 <body>
     <main>
         <section class="produtos-section">
@@ -18,7 +20,8 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="nomeProduto">Nome do Produto:</label>
-                        <input type="text" id="nomeProduto" name="nomeProduto" required placeholder="Digite o nome do produto">
+                        <input type="text" id="nomeProduto" name="nomeProduto" required
+                            placeholder="Digite o nome do produto">
                     </div>
 
                     <div class="form-group">
@@ -58,28 +61,36 @@
 
             const form = document.getElementById('formProduto');
             if (form) {
-                form.addEventListener('submit', async function(e) {
+                form.addEventListener('submit', async function (e) {
                     e.preventDefault();
                     const btnSalvar = document.getElementById('btnSalvar');
                     btnSalvar.disabled = true;
                     btnSalvar.textContent = 'Salvando...';
 
                     const dados = {
-                        nomeProduto: document.getElementById('nomeProduto').value,
-                        tipo: document.getElementById('tipo').value,
-                        valor: parseFloat(document.getElementById('valor').value),
-                        quantidade: parseInt(document.getElementById('quantidade').value),
-                        status: document.getElementById('status').checked
+                        nome: document.getElementById('nomeProduto').value,
+                        categoria: document.getElementById('tipo').value,
+                        preco: parseFloat(document.getElementById('valor').value),
+                        estoque: parseInt(document.getElementById('quantidade').value),
+                        status: document.getElementById('status').checked ? true : false
                     };
 
                     try {
                         await apiService.criarProduto(dados);
                         alert('Produto cadastrado com sucesso!');
-                        if (window.navigateTo) window.navigateTo('/produtos');
-                        else window.location.href = '/produtos';
+                        try {
+                            if (window.navigateTo) {
+                                window.navigateTo('/produtos');
+                            } else {
+                                window.location.href = '/produtos';
+                            }
+                        } catch (navError) {
+                            console.error('Erro ao navegar:', navError);
+                            window.location.href = '/produtos';
+                        }
                     } catch (error) {
                         console.error('Erro:', error);
-                        alert('Erro ao cadastrar: ' + error.message);
+                        alert('Erro ao cadastrar:\n' + (error?.message || String(error)));
                     } finally {
                         btnSalvar.disabled = false;
                         btnSalvar.textContent = 'Salvar Produto';
@@ -88,7 +99,7 @@
 
                 const valorInput = document.getElementById('valor');
                 if (valorInput) {
-                    valorInput.addEventListener('blur', function(e) {
+                    valorInput.addEventListener('blur', function (e) {
                         let value = parseFloat(e.target.value);
                         if (!isNaN(value)) {
                             e.target.value = value.toFixed(2);
@@ -99,6 +110,5 @@
         </script>
     </main>
 </body>
+
 </html>
-
-

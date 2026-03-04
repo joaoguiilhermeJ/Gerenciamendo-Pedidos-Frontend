@@ -84,12 +84,20 @@
 
                             try {
                                 await apiService.atualizarCliente(currentId, dados);
-                                alert('Cliente atualizado com sucesso!');
-                                if (window.navigateTo) window.navigateTo('/clientes');
-                                else window.location.href = '/clientes';
+                                   alert('Cliente atualizado com sucesso!');
+                                   try {
+                                       if (window.navigateTo) {
+                                           window.navigateTo('/clientes');
+                                       } else {
+                                           window.location.href = '/clientes';
+                                       }
+                                   } catch (navError) {
+                                       console.error('Erro ao navegar:', navError);
+                                       window.location.href = '/clientes';
+                                   }
                             } catch (error) {
                                 console.error('Erro:', error);
-                                alert('Erro ao atualizar: ' + error.message);
+                                   alert('Erro ao atualizar:\n' + (error?.message || String(error)));
                             } finally {
                                 btnSalvar.disabled = false;
                                 btnSalvar.textContent = 'Salvar Alterações';

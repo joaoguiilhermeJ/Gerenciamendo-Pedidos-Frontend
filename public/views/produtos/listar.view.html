@@ -63,19 +63,19 @@
                         tbody.innerHTML = '';
                         produtos.forEach(produto => {
                             const tr = document.createElement('tr');
-                            const valor = Number(produto.valor).toFixed(2);
-                            const estoqueClass = produto.quantidade > 0 ? 'estoque-disponivel' : 'estoque-indisponivel';
+                            const valor = Number(produto.preco).toFixed(2);
+                            const estoqueClass = produto.estoque > 0 ? 'estoque-disponivel' : 'estoque-indisponivel';
                             const statusClass = produto.status ? 'status-ativo' : 'status-inativo';
                             const statusLabel = produto.status ? 'Ativo' : 'Inativo';
 
                             tr.innerHTML = `
-                                <td>${produto.idProduto}</td>
-                                <td>${produto.nomeProduto}</td>
-                                <td>${produto.tipo || 'N/A'}</td>
+                                <td>${produto.id}</td>
+                                <td>${produto.nome}</td>
+                                <td>${produto.categoria || 'N/A'}</td>
                                 <td>R$ ${valor}</td>
                                 <td>
                                     <span class="estoque ${estoqueClass}">
-                                        ${produto.quantidade} unidades
+                                        ${produto.estoque} unidades
                                     </span>
                                 </td>
                                 <td>
@@ -84,8 +84,8 @@
                                     </span>
                                 </td>
                                 <td class="actions">
-                                    <a href="/produtos/${produto.idProduto}/editar" class="btn btn-warning btn-small">Editar</a>
-                                    <button class="btn btn-danger btn-small btn-delete-product" data-product-id="${produto.idProduto}">Deletar</button>
+                                    <a href="/produtos/${produto.id}/editar" class="btn btn-warning btn-small">Editar</a>
+                                    <button class="btn btn-danger btn-small btn-delete-product" data-product-id="${produto.id}">Deletar</button>
                                 </td>
                             `;
                             tbody.appendChild(tr);
@@ -100,7 +100,7 @@
                                         alert('Produto deletado com sucesso!');
                                         carregarProdutos();
                                     } catch (error) {
-                                        alert('Erro ao deletar: ' + error.message);
+                                           alert('Erro ao deletar:\n' + (error?.message || String(error)));
                                     }
                                 }
                             };
@@ -111,7 +111,7 @@
                     }
                 } catch (error) {
                     console.error('Erro:', error);
-                    if (loading) loading.innerHTML = `<p style="color:red">Erro ao carregar: ${error.message}</p>`;
+                       if (loading) loading.innerHTML = `<p style="color:red">Erro ao carregar: ${error?.message || String(error)}</p>`;
                 }
             }
 

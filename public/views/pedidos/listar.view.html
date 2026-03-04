@@ -125,7 +125,7 @@
                                         alert('Pedido deletado com sucesso!');
                                         carregarPedidos();
                                     } catch (error) {
-                                        alert('Erro ao deletar pedido: ' + error.message);
+                                           alert('Erro ao deletar pedido:\n' + (error?.message || String(error)));
                                     }
                                 }
                             };
@@ -140,7 +140,7 @@
                     }
                 } catch (error) {
                     console.error('Erro:', error);
-                    if (loading) loading.innerHTML = '<p style="color:red">Erro ao carregar pedidos: ' + error.message + '</p>';
+                       if (loading) loading.innerHTML = '<p style="color:red">Erro ao carregar pedidos: ' + (error?.message || String(error)) + '</p>';
                 }
             }
 

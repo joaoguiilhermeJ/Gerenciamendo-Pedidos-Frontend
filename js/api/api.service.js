@@ -1,6 +1,27 @@
 import API_CONFIG from "./api.config.js";
 
 class APIService {
+  _normalizeProduto(produto) {
+    if (!produto) return produto;
+    return {
+      id: produto.id ?? produto.idProduto ?? null,
+      nome: produto.nome ?? produto.nomeProduto ?? "",
+      categoria: produto.categoria ?? produto.tipo ?? null,
+      preco: Number(produto.preco ?? produto.valor ?? 0),
+      estoque: Number(produto.estoque ?? produto.quantidade ?? 0),
+      status: produto.status ?? true,
+    };
+  }
+
+  _produtoPayloadFromForm(dados) {
+    return {
+      nome: dados.nome ?? dados.nomeProduto ?? "",
+      preco: Number(dados.preco ?? dados.valor ?? 0),
+      estoque: Number(dados.estoque ?? dados.quantidade ?? 0),
+      categoria: dados.categoria ?? dados.tipo ?? null,
+    };
+  }
+
   async request(url, options = {}) {
     try {
       const headers = {
@@ -22,7 +43,16 @@ class APIService {
         );
       }
 
-      return await response.json();
+      // Alguns endpoints podem retornar 204 No Content ou respostas sem JSON.
+      if (response.status === 204) return null;
+
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        // Retorna texto para casos inesperados
+        return await response.text().catch(() => null);
+      }
+
+      return await response.json().catch(() => null);
     } catch (error) {
       console.error("Erro na requisição:", error);
       if (
@@ -39,6 +69,11 @@ class APIService {
     }
   }
 
+  async deletarPedido(id) {
+    return this.request(API_CONFIG.endpoints.pedidos.deletar(id), {
+      method: "DELETE",
+    });
+  }
   async listarClientes() {
     return this.request(API_CONFIG.endpoints.clientes.listar(), {
       method: "GET",
@@ -72,28 +107,33 @@ class APIService {
   }
 
   async listarProdutos() {
-    return this.request(API_CONFIG.endpoints.produtos.listar(), {
+    const res = await this.request(API_CONFIG.endpoints.produtos.listar(), {
       method: "GET",
     });
+    if (!res) return [];
+    return Array.isArray(res) ? res.map((p) => this._normalizeProduto(p)) : [this._normalizeProduto(res)];
   }
 
   async buscarProduto(id) {
-    return this.request(API_CONFIG.endpoints.produtos.buscar(id), {
+    const res = await this.request(API_CONFIG.endpoints.produtos.buscar(id), {
       method: "GET",
     });
+    return this._normalizeProduto(res);
   }
 
   async criarProduto(dados) {
+    const payload = this._produtoPayloadFromForm(dados);
     return this.request(API_CONFIG.endpoints.produtos.criar(), {
       method: "POST",
-      body: JSON.stringify(dados),
+      body: JSON.stringify(payload),
     });
   }
 
   async atualizarProduto(id, dados) {
+    const payload = this._produtoPayloadFromForm(dados);
     return this.request(API_CONFIG.endpoints.produtos.atualizar(id), {
       method: "PUT",
-      body: JSON.stringify(dados),
+      body: JSON.stringify(payload),
     });
   }
 

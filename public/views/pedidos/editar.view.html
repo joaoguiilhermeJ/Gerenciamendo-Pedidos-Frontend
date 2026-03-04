@@ -80,12 +80,20 @@
 
                             try {
                                 await apiService.atualizarPedido(currentOrderId, dados);
-                                alert('Local de entrega atualizado com sucesso!');
-                                if (window.navigateTo) window.navigateTo('/pedidos');
-                                else window.location.href = '/pedidos';
+                                   alert('Local de entrega atualizado com sucesso!');
+                                   try {
+                                       if (window.navigateTo) {
+                                           window.navigateTo('/pedidos');
+                                       } else {
+                                           window.location.href = '/pedidos';
+                                       }
+                                   } catch (navError) {
+                                       console.error('Erro ao navegar:', navError);
+                                       window.location.href = '/pedidos';
+                                   }
                             } catch (error) {
                                 console.error('Erro:', error);
-                                alert('Erro ao atualizar: ' + error.message);
+                                   alert('Erro ao atualizar:\n' + (error?.message || String(error)));
                             } finally {
                                 btnSalvar.disabled = false;
                                 btnSalvar.textContent = 'Salvar Alterações';
