@@ -2,148 +2,250 @@
 <html lang="pt-BR">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Histórico Geral de Itens</title>
-    <link rel="stylesheet" href="/css/main.css">
-    <link rel="stylesheet" href="/css/pedido.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Histórico Geral de Itens</title>
+
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/pedido.css">
+
 </head>
 
 <body>
-    <main>
-        <section class="pedidos-section">
-            <div class="section-header">
-                <h2>Histórico Geral de Itens Vendidos</h2>
-            </div>
 
-            <div id="loading" class="text-center">Carregando histórico de itens...</div>
+<main>
 
-            <div class="table-container" id="tableContainer" style="display: none;">
-                <table class="table table-itens">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Pedido</th>
-                            <th>Produto</th>
-                            <th>Qtd</th>
-                            <th>Valor Unit.</th>
-                            <th>Total Item</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="itensTableBody">
-                        <!-- Preenchido via JS -->
-                    </tbody>
-                </table>
-            </div>
+<section class="pedidos-section">
 
-            <div class="empty-state" id="emptyState" style="display: none;">
-                <p>Nenhum item vendido ainda.</p>
-            </div>
-        </section>
+<div class="section-header">
+<h2>Histórico Geral de Itens Vendidos</h2>
+</div>
 
-        <script type="module">
-            const apiService = window.apiService;
+<div id="loading" class="text-center">
+Carregando histórico de itens...
+</div>
 
-            async function carregarItens() {
-                const loading = document.getElementById('loading');
-                const tableContainer = document.getElementById('tableContainer');
-                const emptyState = document.getElementById('emptyState');
-                const tbody = document.getElementById('itensTableBody');
 
-                if (!loading || !tableContainer || !tbody) return;
+<div class="table-container" id="tableContainer" style="display:none">
 
-                try {
-                    const pedidos = await apiService.listarPedidos();
-                    loading.style.display = 'none';
+<table class="table table-itens">
 
-                    let todosOsItens = [];
-                    pedidos.forEach(pedido => {
-                        const itens = pedido.itens || pedido.Itens || [];
-                        itens.forEach(item => {
-                            todosOsItens.push({
-                                ...item,
-                                pedidoInfo: {
-                                    idPedido: pedido.idPedido || pedido.id,
-                                    horaPedido: pedido.horaPedido || pedido.createdAt,
-                                    horaEntrega: pedido.horaEntrega,
-                                    local: pedido.local
-                                }
-                            });
-                        });
-                    });
+<thead>
 
-                    if (todosOsItens.length > 0) {
-                        tableContainer.style.display = 'block';
-                        emptyState.style.display = 'none';
-                        tbody.innerHTML = '';
+<tr>
+<th>Data</th>
+<th>Pedido</th>
+<th>Produto</th>
+<th>Qtd</th>
+<th>Valor Unit.</th>
+<th>Total Item</th>
+<th>Status</th>
+<th>Ações</th>
+</tr>
 
-                        todosOsItens.sort((a, b) => new Date(b.pedidoInfo.horaPedido) - new Date(a.pedidoInfo.horaPedido));
+</thead>
 
-                        todosOsItens.forEach(item => {
-                            const tr = document.createElement('tr');
-                            const data = item.pedidoInfo.horaPedido ? new Date(item.pedidoInfo.horaPedido).toLocaleDateString('pt-BR') : 'N/A';
-                            const vUnit = Number(item.valorUnitario || item.valor || 0);
-                            const sub = item.quantidade * vUnit;
-                            const statusClass = item.pedidoInfo.horaEntrega ? 'entregue' : 'pendente';
-                            const statusLabel = item.pedidoInfo.horaEntrega ? 'Entregue' : 'Pendente';
+<tbody id="itensTableBody"></tbody>
 
-                            tr.innerHTML = `
-                                <td>${data}</td>
-                                <td>#${item.pedidoInfo.idPedido}</td>
-                                <td>${item.produto_nome || item.Produto?.nome || 'Produto #' + item.idProduto}</td>
-                                <td>${item.quantidade}</td>
-                                <td>R$ ${vUnit.toFixed(2)}</td>
-                                <td>R$ ${sub.toFixed(2)}</td>
-                                <td>
-                                    <span class="status status-${statusClass}">
-                                        ${statusLabel}
-                                    </span>
-                                </td>
-                                <td>
-                                    ${!item.pedidoInfo.horaEntrega ? `
-                                        <button class="btn btn-success btn-small btn-confirm-delivery" 
-                                                data-order-id="${item.pedidoInfo.idPedido}">
-                                            Confirmar Entrega
-                                        </button>
-                                    ` : '-'}
-                                </td>
-                            `;
-                            tbody.appendChild(tr);
-                        });
+</table>
 
-                        document.querySelectorAll('.btn-confirm-delivery').forEach(btn => {
-                            btn.onclick = async function () {
-                                const orderId = this.dataset.orderId;
-                                if (confirm('Deseja confirmar a entrega deste pedido?')) {
-                                    try {
-                                        if (apiService.entregarPedido) {
-                                            await apiService.entregarPedido(orderId);
-                                        } else {
-                                            throw new Error('Método entregarPedido não disponível no serviço.');
-                                        }
-                                        alert('Entrega confirmada com sucesso!');
-                                        carregarItens();
-                                    } catch (error) {
-                                        alert('Erro ao confirmar entrega: ' + error.message);
-                                    }
-                                }
-                            };
-                        });
-                    } else {
-                        tableContainer.style.display = 'none';
-                        emptyState.style.display = 'block';
-                    }
-                } catch (error) {
-                    console.error('Erro:', error);
-                    if (loading) loading.innerHTML = `<p style="color:red">Erro ao carregar: ${error.message}</p>`;
-                }
-            }
+</div>
 
-            carregarItens();
-        </script>
-    </main>
+
+<div class="empty-state" id="emptyState" style="display:none">
+<p>Nenhum item vendido ainda.</p>
+</div>
+
+</section>
+
+</main>
+
+
+<script type="module">
+
+const apiService = window.apiService
+
+async function carregarItens() {
+
+const loading = document.getElementById("loading")
+const tableContainer = document.getElementById("tableContainer")
+const emptyState = document.getElementById("emptyState")
+const tbody = document.getElementById("itensTableBody")
+
+try {
+
+const [pedidos, produtos] = await Promise.all([
+apiService.listarPedidos(),
+apiService.listarProdutos()
+])
+
+loading.style.display = "none"
+
+let todosOsItens = []
+
+pedidos.forEach(pedido => {
+
+const itens = pedido.itens || pedido.Itens || []
+
+itens.forEach(item => {
+
+todosOsItens.push({
+...item,
+pedidoInfo: {
+idPedido: pedido.idPedido || pedido.id,
+horaPedido: pedido.horaPedido || pedido.createdAt,
+horaEntrega: pedido.horaEntrega,
+local: pedido.local
+}
+})
+
+})
+
+})
+
+if (todosOsItens.length === 0) {
+
+tableContainer.style.display = "none"
+emptyState.style.display = "block"
+return
+
+}
+
+tableContainer.style.display = "block"
+emptyState.style.display = "none"
+
+tbody.innerHTML = ""
+
+todosOsItens.sort((a,b) =>
+new Date(b.pedidoInfo.horaPedido) -
+new Date(a.pedidoInfo.horaPedido)
+)
+
+todosOsItens.forEach(item => {
+
+const produtoId = item.idProduto
+
+const produto = produtos.find(p =>
+(p.idProduto || p.id) == produtoId
+)
+
+const nomeProduto =
+produto?.nome ||
+item.produto_nome ||
+item.Produto?.nome ||
+("Produto #" + produtoId)
+
+const valorUnit =
+Number(produto?.preco || item.valorUnitario || item.valor || 0)
+
+const subtotal = valorUnit * item.quantidade
+
+const data =
+item.pedidoInfo.horaPedido
+? new Date(item.pedidoInfo.horaPedido)
+.toLocaleDateString("pt-BR")
+: "N/A"
+
+const statusClass =
+item.pedidoInfo.horaEntrega
+? "entregue"
+: "pendente"
+
+const statusLabel =
+item.pedidoInfo.horaEntrega
+? "Entregue"
+: "Pendente"
+
+const tr = document.createElement("tr")
+
+tr.innerHTML = `
+
+<td>${data}</td>
+
+<td>#${item.pedidoInfo.idPedido}</td>
+
+<td>${nomeProduto}</td>
+
+<td>${item.quantidade}</td>
+
+<td>R$ ${valorUnit.toFixed(2)}</td>
+
+<td>R$ ${subtotal.toFixed(2)}</td>
+
+<td>
+<span class="status status-${statusClass}">
+${statusLabel}
+</span>
+</td>
+
+<td>
+
+${
+!item.pedidoInfo.horaEntrega
+? `
+<button
+class="btn btn-success btn-small btn-confirm-delivery"
+data-order-id="${item.pedidoInfo.idPedido}">
+Confirmar Entrega
+</button>
+`
+: "-"
+}
+
+</td>
+
+`
+
+tbody.appendChild(tr)
+
+})
+
+
+document.querySelectorAll(".btn-confirm-delivery")
+.forEach(btn => {
+
+btn.onclick = async function () {
+
+const orderId = this.dataset.orderId
+
+if (!confirm("Deseja confirmar a entrega deste pedido?"))
+return
+
+try {
+
+await apiService.entregarPedido(orderId)
+
+alert("Entrega confirmada com sucesso!")
+
+carregarItens()
+
+} catch (error) {
+
+alert("Erro ao confirmar entrega: " + error.message)
+
+}
+
+}
+
+})
+
+}
+
+catch(error){
+
+console.error(error)
+
+loading.innerHTML =
+`<p style="color:red">Erro ao carregar: ${error.message}</p>`
+
+}
+
+}
+
+carregarItens()
+
+</script>
+
 </body>
-
 </html>
