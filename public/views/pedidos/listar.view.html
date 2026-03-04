@@ -1,71 +1,153 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Listar Pedidos</title>
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/pedido.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Pedidos</title>
+    <!-- Corrigindo os caminhos para serem absolutos a partir da raiz -->
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/pedido.css">
 </head>
 <body>
-  <main>
-    <section class="pedidos-section">
-      <div class="section-header">
-        <h2>Lista de Pedidos</h2>
-        <a href="/pedidos/cadastrar" class="btn btn-primary">+ Novo Pedido</a>
-      </div>
+    <main>
+        <section class="pedidos-section">
+            <div class="section-header">
+                <h2>Gerenciamento de Pedidos</h2>
+                <a href="/pedidos/cadastrar" class="btn btn-primary">+ Novo Pedido</a>
+            </div>
 
-      <div class="table-container" style="display:none;">
-        <table class="table table-pedidos">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Cliente</th>
-              <th>Total</th>
-              <th>Data</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+            <div class="order-stats" id="orderStats">
+                <div class="stat-card">
+                    <label>Total de Pedidos</label>
+                    <div class="value" id="totalPedidos">-</div>
+                </div>
+                <div class="stat-card">
+                    <label>Pedidos Hoje</label>
+                    <div class="value" id="pedidosHoje">-</div>
+                </div>
+                <div class="stat-card">
+                    <label>Pedidos Pendentes</label>
+                    <div class="value" id="pedidosPendentes">-</div>
+                </div>
+            </div>
+            <br>
+            
+            <div id="loading" class="text-center">Carregando pedidos...</div>
 
-      <div class="empty-state" style="display:none;">
-        <p>Nenhum pedido cadastrado.</p>
-      </div>
-    </section>
-  </main>
+            <div class="table-container" id="tableContainer" style="display: none;">
+                <table class="table table-pedidos">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Data</th>
+                            <th>Cliente</th>
+                            <th>Status</th>
+                            <th>Total</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pedidosTableBody">
+                        <!-- Preenchido via JS -->
+                    </tbody>
+                </table>
+            </div>
 
-  <script type="module">
-    import apiService from '/js/api/api.service.js';
-    document.addEventListener('DOMContentLoaded', async () => {
-      const tableBody = document.querySelector('.table-pedidos tbody');
-      const emptyState = document.querySelector('.empty-state');
-      const tableContainer = document.querySelector('.table-container');
-      try {
-        const pedidos = await apiService.listarPedidos();
-        if (pedidos && pedidos.length > 0) {
-          if (emptyState) emptyState.style.display = 'none';
-          if (tableContainer) tableContainer.style.display = 'block';
-          let html = '';
-          pedidos.forEach(p => {
-            html += `
-              <tr>
-                <td>${p.idPedido || p.id}</td>
-                <td>${p.clienteNome || p.cliente}</td>
-                <td>R$ ${p.total}</td>
-                <td>${p.data}</td>
-                <td class="actions">
-                  <a href="/pedidos/${p.idPedido || p.id}/detalhes" class="btn btn-info btn-small">Detalhes</a>
-                  <a href="/pedidos/${p.idPedido || p.id}/editar" class="btn btn-warning btn-small">Editar</a>
-                </td>
-              </tr>
-            `;
-          });
-          if (tableBody) { tableBody.innerHTML = html; }
-        } else { if (tableContainer) tableContainer.style.display = 'none'; if (emptyState) emptyState.style.display = 'block'; }
-      } catch (error) { console.error('Erro ao carregar pedidos:', error); alert('Erro ao carregar pedidos: ' + error.message); }
-    });
-  </script>
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <p>Nenhum pedido cadastrado.</p>
+                <a href="/pedidos/cadastrar" class="btn btn-primary">Criar Primeiro Pedido</a>
+            </div>
+        </section>
+
+        <script type="module">
+            import apiService from '/js/api/api.service.js';
+
+            async function carregarPedidos() {
+                const loading = document.getElementById('loading');
+                const tableContainer = document.getElementById('tableContainer');
+                const emptyState = document.getElementById('emptyState');
+                const tbody = document.getElementById('pedidosTableBody');
+                
+                const totalPedidosEl = document.getElementById('totalPedidos');
+                const pedidosHojeEl = document.getElementById('pedidosHoje');
+                const pedidosPendentesEl = document.getElementById('pedidosPendentes');
+
+                if (!loading || !tableContainer || !tbody || !totalPedidosEl) return;
+
+                try {
+                    const pedidos = await apiService.listarPedidos();
+                    loading.style.display = 'none';
+
+                    if (pedidos && pedidos.length > 0) {
+                        tableContainer.style.display = 'block';
+                        emptyState.style.display = 'none';
+
+                        const hoje = new Date().toLocaleDateString('pt-BR');
+                        const numPedidosHoje = pedidos.filter(p => p.horaPedido && new Date(p.horaPedido).toLocaleDateString('pt-BR') === hoje).length;
+                        const numPedidosPendentes = pedidos.filter(p => !p.horaEntrega).length;
+
+                        totalPedidosEl.textContent = pedidos.length;
+                        pedidosHojeEl.textContent = numPedidosHoje;
+                        pedidosPendentesEl.textContent = numPedidosPendentes;
+
+                        tbody.innerHTML = '';
+                        pedidos.forEach(pedido => {
+                            const tr = document.createElement('tr');
+                            const data = pedido.horaPedido ? new Date(pedido.horaPedido).toLocaleDateString('pt-BR') : 'N/A';
+                            const status = pedido.horaEntrega ? 'Entregue' : 'Pendente';
+                            const statusClass = pedido.horaEntrega ? 'entregue' : 'pendente';
+                            const valorTotal = (pedido.valorTotal || 0).toFixed(2);
+
+                            tr.innerHTML = `
+                                <td>${pedido.idPedido}</td>
+                                <td>${data}</td>
+                                <td>Cliente #${pedido.idCliente}</td>
+                                <td>
+                                    <span class="status status-${statusClass}">
+                                        ${status}
+                                    </span>
+                                </td>
+                                <td>R$ ${valorTotal}</td>
+                                <td class="actions">
+                                    <a href="/pedidos/${pedido.idPedido}" class="btn btn-info btn-small">Ver</a>
+                                    <a href="/pedidos/${pedido.idPedido}/editar" class="btn btn-warning btn-small">Editar</a>
+                                    <button class="btn btn-danger btn-small btn-delete-order" data-order-id="${pedido.idPedido}">Deletar</button>
+                                </td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+
+                        document.querySelectorAll('.btn-delete-order').forEach(btn => {
+                            btn.onclick = async function() {
+                                const orderId = this.dataset.orderId;
+                                if (confirm('Tem certeza que deseja deletar este pedido?')) {
+                                    try {
+                                        await apiService.cancelarPedido(orderId);
+                                        alert('Pedido deletado com sucesso!');
+                                        carregarPedidos();
+                                    } catch (error) {
+                                        alert('Erro ao deletar pedido: ' + error.message);
+                                    }
+                                }
+                            };
+                        });
+
+                    } else {
+                        tableContainer.style.display = 'none';
+                        emptyState.style.display = 'block';
+                        totalPedidosEl.textContent = '0';
+                        pedidosHojeEl.textContent = '0';
+                        pedidosPendentesEl.textContent = '0';
+                    }
+                } catch (error) {
+                    console.error('Erro:', error);
+                    if (loading) loading.innerHTML = '<p style="color:red">Erro ao carregar pedidos: ' + error.message + '</p>';
+                }
+            }
+
+            carregarPedidos();
+        </script>
+    </main>
 </body>
 </html>
+
+

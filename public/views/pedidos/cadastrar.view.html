@@ -1,18 +1,261 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cadastrar Pedido</title>
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/pedido.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Novo Pedido</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/pedido.css">
 </head>
 <body>
-  <main>
-    <section class="pedidos-section">
-      <h2>Cadastrar Pedido</h2>
-      <!-- formulário de cadastro aqui -->
-    </section>
-  </main>
+    <main>
+        <section class="pedidos-section">
+            <div class="section-header">
+                <h2>Criar Novo Pedido</h2>
+            </div>
+
+            <form class="form-pedido" id="formPedido">
+                <div class="form-group">
+                    <label for="idCliente">Cliente:</label>
+                    <select id="idCliente" name="idCliente" required>
+                        <option value="">Carregando clientes...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="local">Local da Entrega:</label>
+                    <input type="text" id="local" name="local" required placeholder="Digite o local da entrega">
+                </div>
+
+                <fieldset class="form-section">
+                    <legend>Itens do Pedido</legend>
+                    
+                    <div id="itens-container">
+                        <div class="item-pedido" data-index="0">
+                            <div class="form-group-inline">
+                                <div class="form-group">
+                                    <label>Produto:</label>
+                                    <select name="itens[0][idProduto]" class="select-produto" required>
+                                        <option value="">Carregando produtos...</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Quantidade:</label>
+                                    <input type="number" name="itens[0][quantidade]" class="input-quantidade" min="1" required value="1">
+                                </div>
+
+                                <button type="button" class="btn btn-danger btn-small btn-remove-item">Remover</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-secondary" id="addItem">+ Adicionar Item</button>
+                </fieldset>
+
+                <div class="form-group resumo-pedido">
+                    <label>Total do Pedido:</label>
+                    <div id="calculo-total" class="resumo-item total">
+                        <span>R$ 0,00</span>
+                    </div>
+                    <input type="hidden" id="valorTotal" name="valorTotal" value="0">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="btnSalvar">Salvar Pedido</button>
+                    <a href="/pedidos" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </section>
+
+        <script type="module">
+            import apiService from '/js/api/api.service.js';
+
+            let itemCount = 1;
+            let produtosData = [];
+            let clientesData = [];
+
+            async function inicializar() {
+                try {
+                    const [clientes, produtos] = await Promise.all([
+                        apiService.listarClientes(),
+                        apiService.listarProdutos()
+                    ]);
+
+                    clientesData = clientes;
+                    produtosData = produtos;
+
+                    popularClientes();
+                    popularProdutosIniciais();
+                } catch (error) {
+                    console.error('Erro ao inicializar formulário:', error);
+                }
+            }
+
+            function popularClientes() {
+                const selectCliente = document.getElementById('idCliente');
+                if (!selectCliente) return;
+                selectCliente.innerHTML = '<option value="">Selecione um cliente</option>';
+                clientesData.forEach(cliente => {
+                    const opt = document.createElement('option');
+                    opt.value = cliente.idCliente;
+                    opt.textContent = cliente.nomeCliente;
+                    selectCliente.appendChild(opt);
+                });
+            }
+
+            function popularProdutosIniciais() {
+                const selects = document.querySelectorAll('.select-produto');
+                selects.forEach(select => {
+                    popularSelectProduto(select);
+                });
+            }
+
+            function popularSelectProduto(select) {
+                if (!select) return;
+                select.innerHTML = '<option value="">Selecione um produto</option>';
+                produtosData.forEach(produto => {
+                    const opt = document.createElement('option');
+                    opt.value = produto.idProduto;
+                    opt.dataset.preco = produto.valor;
+                    opt.textContent = `${produto.nomeProduto} (R$ ${produto.valor.toFixed(2)})`;
+                    select.appendChild(opt);
+                });
+            }
+
+            function atualizarTotal() {
+                let total = 0;
+                document.querySelectorAll('.item-pedido').forEach(item => {
+                    const select = item.querySelector('.select-produto');
+                    const quantidadeInput = item.querySelector('.input-quantidade');
+                    
+                    if (!select || !quantidadeInput) return;
+
+                    const produtoId = select.value;
+                    const quantidade = parseInt(quantidadeInput.value) || 0;
+                    
+                    if (produtoId) {
+                        const produto = produtosData.find(p => p.idProduto == produtoId);
+                        if (produto) {
+                            total += produto.valor * quantidade;
+                        }
+                    }
+                });
+                
+                const calculoTotalSpan = document.querySelector('#calculo-total span');
+                const valorTotalInput = document.getElementById('valorTotal');
+                if (calculoTotalSpan) calculoTotalSpan.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+                if (valorTotalInput) valorTotalInput.value = total;
+            }
+
+            function removerItem(element) {
+                const items = document.querySelectorAll('.item-pedido');
+                if (items.length > 1) {
+                    element.remove();
+                    atualizarTotal();
+                } else {
+                    alert('O pedido deve ter pelo menos um item');
+                }
+            }
+
+            const addItemBtn = document.getElementById('addItem');
+            if (addItemBtn) {
+                addItemBtn.addEventListener('click', function() {
+                    const container = document.getElementById('itens-container');
+                    const novoItem = document.createElement('div');
+                    novoItem.className = 'item-pedido';
+                    novoItem.dataset.index = itemCount;
+                    
+                    novoItem.innerHTML = `
+                        <div class="form-group-inline">
+                            <div class="form-group">
+                                <label>Produto:</label>
+                                <select name="itens[${itemCount}][idProduto]" class="select-produto" required>
+                                    <option value="">Carregando...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Quantidade:</label>
+                                <input type="number" name="itens[${itemCount}][quantidade]" class="input-quantidade" min="1" required value="1">
+                            </div>
+
+                            <button type="button" class="btn btn-danger btn-small btn-remove-item">Remover</button>
+                        </div>
+                    `;
+                    container.appendChild(novoItem);
+                    
+                    const select = novoItem.querySelector('.select-produto');
+                    popularSelectProduto(select);
+
+                    select.addEventListener('change', atualizarTotal);
+                    novoItem.querySelector('.input-quantidade').addEventListener('input', atualizarTotal);
+                    novoItem.querySelector('.btn-remove-item').addEventListener('click', function() {
+                        removerItem(novoItem);
+                    });
+                    
+                    itemCount++;
+                    atualizarTotal();
+                });
+            }
+
+            const firstSelect = document.querySelector('.select-produto');
+            const firstQty = document.querySelector('.input-quantidade');
+            const firstRemove = document.querySelector('.btn-remove-item');
+
+            if (firstSelect) firstSelect.addEventListener('change', atualizarTotal);
+            if (firstQty) firstQty.addEventListener('input', atualizarTotal);
+            if (firstRemove) firstRemove.addEventListener('click', function() {
+                removerItem(document.querySelector('.item-pedido'));
+            });
+
+            const form = document.getElementById('formPedido');
+            if (form) {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const btnSalvar = document.getElementById('btnSalvar');
+                    btnSalvar.disabled = true;
+                    btnSalvar.textContent = 'Salvando...';
+
+                    const items = [];
+                    document.querySelectorAll('.item-pedido').forEach(item => {
+                        const idProduto = item.querySelector('.select-produto').value;
+                        const quantidade = item.querySelector('.input-quantidade').value;
+                        if (idProduto && quantidade) {
+                            items.push({ idProduto: parseInt(idProduto), quantidade: parseInt(quantidade) });
+                        }
+                    });
+
+                    if (items.length === 0) {
+                        alert('Adicione pelo menos um item ao pedido');
+                        btnSalvar.disabled = false;
+                        btnSalvar.textContent = 'Salvar Pedido';
+                        return;
+                    }
+
+                    const dados = {
+                        idCliente: parseInt(document.getElementById('idCliente').value),
+                        local: document.getElementById('local').value,
+                        itens: items
+                    };
+
+                    try {
+                        await apiService.criarPedido(dados);
+                        alert('Pedido criado com sucesso!');
+                        if (window.navigateTo) window.navigateTo('/pedidos');
+                        else window.location.href = '/pedidos';
+                    } catch (error) {
+                        console.error('Erro:', error);
+                        alert('Erro ao criar pedido: ' + error.message);
+                    } finally {
+                        btnSalvar.disabled = false;
+                        btnSalvar.textContent = 'Salvar Pedido';
+                    }
+                });
+            }
+
+            inicializar();
+        </script>
+    </main>
 </body>
 </html>

@@ -1,44 +1,148 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Listar Itens</title>
-  <link rel="stylesheet" href="/css/main.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico Geral de Itens</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/pedido.css">
 </head>
 <body>
-  <main>
-    <section class="itens-section">
-      <div class="section-header">
-        <h2>Lista de Itens</h2>
-      </div>
-      <div class="table-container" style="display:none;">
-        <table class="table table-itens"><thead><tr><th>ID</th><th>Pedido</th><th>Produto</th><th>Quantidade</th></tr></thead><tbody></tbody></table>
-      </div>
-      <div class="empty-state" style="display:none;"><p>Nenhum item encontrado.</p></div>
-    </section>
-  </main>
-  <script type="module">
-    import apiService from '/js/api/api.service.js';
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Implementação mínima para listar itens se endpoint existir no backend
-      try {
-        // Supondo que items venham integrados aos pedidos; isso é um placeholder
-        const pedidos = await apiService.listarPedidos();
-        const tbody = document.querySelector('.table-itens tbody');
-        if (pedidos && pedidos.length > 0) {
-          let html = '';
-          pedidos.forEach(p => {
-            if (p.itens) {
-              p.itens.forEach(item => {
-                html += `<tr><td>${item.id}</td><td>${p.id}</td><td>${item.produtoNome || item.nome}</td><td>${item.quantidade}</td></tr>`;
-              });
+    <main>
+        <section class="pedidos-section">
+            <div class="section-header">
+                <h2>Histórico Geral de Itens Vendidos</h2>
+            </div>
+
+            <div id="loading" class="text-center">Carregando histórico de itens...</div>
+
+            <div class="table-container" id="tableContainer" style="display: none;">
+                <table class="table table-itens">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Pedido</th>
+                            <th>Produto</th>
+                            <th>Qtd</th>
+                            <th>Valor Unit.</th>
+                            <th>Total Item</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itensTableBody">
+                        <!-- Preenchido via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <p>Nenhum item vendido ainda.</p>
+            </div>
+        </section>
+
+        <script type="module">
+            import apiService from '/js/api/api.service.js';
+
+            async function carregarItens() {
+                const loading = document.getElementById('loading');
+                const tableContainer = document.getElementById('tableContainer');
+                const emptyState = document.getElementById('emptyState');
+                const tbody = document.getElementById('itensTableBody');
+
+                if (!loading || !tableContainer || !tbody) return;
+
+                try {
+                    const pedidos = await apiService.listarPedidos();
+                    loading.style.display = 'none';
+
+                    let todosOsItens = [];
+                    pedidos.forEach(pedido => {
+                        const itens = pedido.itens || pedido.Itens || [];
+                        itens.forEach(item => {
+                            todosOsItens.push({
+                                ...item,
+                                pedidoInfo: {
+                                    idPedido: pedido.idPedido || pedido.id,
+                                    horaPedido: pedido.horaPedido || pedido.createdAt,
+                                    horaEntrega: pedido.horaEntrega,
+                                    local: pedido.local
+                                }
+                            });
+                        });
+                    });
+
+                    if (todosOsItens.length > 0) {
+                        tableContainer.style.display = 'block';
+                        emptyState.style.display = 'none';
+                        tbody.innerHTML = '';
+                        
+                        todosOsItens.sort((a, b) => new Date(b.pedidoInfo.horaPedido) - new Date(a.pedidoInfo.horaPedido));
+
+                        todosOsItens.forEach(item => {
+                            const tr = document.createElement('tr');
+                            const data = item.pedidoInfo.horaPedido ? new Date(item.pedidoInfo.horaPedido).toLocaleDateString('pt-BR') : 'N/A';
+                            const vUnit = Number(item.valorUnitario || item.valor || 0);
+                            const sub = item.quantidade * vUnit;
+                            const statusClass = item.pedidoInfo.horaEntrega ? 'entregue' : 'pendente';
+                            const statusLabel = item.pedidoInfo.horaEntrega ? 'Entregue' : 'Pendente';
+
+                            tr.innerHTML = `
+                                <td>${data}</td>
+                                <td>#${item.pedidoInfo.idPedido}</td>
+                                <td>${item.produto_nome || item.Produto?.nomeProduto || 'Produto #' + item.idProduto}</td>
+                                <td>${item.quantidade}</td>
+                                <td>R$ ${vUnit.toFixed(2)}</td>
+                                <td>R$ ${sub.toFixed(2)}</td>
+                                <td>
+                                    <span class="status status-${statusClass}">
+                                        ${statusLabel}
+                                    </span>
+                                </td>
+                                <td>
+                                    ${!item.pedidoInfo.horaEntrega ? `
+                                        <button class="btn btn-success btn-small btn-confirm-delivery" 
+                                                data-order-id="${item.pedidoInfo.idPedido}">
+                                            Confirmar Entrega
+                                        </button>
+                                    ` : '-'}
+                                </td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+
+                        document.querySelectorAll('.btn-confirm-delivery').forEach(btn => {
+                            btn.onclick = async function() {
+                                const orderId = this.dataset.orderId;
+                                if (confirm('Deseja confirmar a entrega deste pedido?')) {
+                                    try {
+                                        if (apiService.entregarPedido) {
+                                            await apiService.entregarPedido(orderId);
+                                        } else {
+                                            throw new Error('Método entregarPedido não disponível no serviço.');
+                                        }
+                                        alert('Entrega confirmada com sucesso!');
+                                        carregarItens();
+                                    } catch (error) {
+                                        alert('Erro ao confirmar entrega: ' + error.message);
+                                    }
+                                }
+                            };
+                        });
+                    } else {
+                        tableContainer.style.display = 'none';
+                        emptyState.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error('Erro:', error);
+                    if (loading) loading.innerHTML = `<p style="color:red">Erro ao carregar: ${error.message}</p>`;
+                }
             }
-          });
-          if (tbody) tbody.innerHTML = html;
-        }
-      } catch (error) { console.warn('Itens: não foi possível carregar itens:', error); }
-    });
-  </script>
+
+            carregarItens();
+        </script>
+    </main>
 </body>
 </html>
+
+

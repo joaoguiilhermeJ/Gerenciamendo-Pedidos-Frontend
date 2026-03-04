@@ -1,18 +1,112 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editar Cliente</title>
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/cliente.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Cliente</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/cliente.css">
 </head>
 <body>
-  <main>
-    <section class="clientes-section">
-      <h2>Editar Cliente</h2>
-      <!-- formulário de edição aqui -->
-    </section>
-  </main>
+    <main>
+        <section class="clientes-section">
+            <div id="loading-editar" class="text-center">Carregando dados do cliente...</div>
+            
+            <div id="conteudoForm" style="display: none;">
+                <div class="section-header">
+                    <h2 id="tituloEditar">Editar Cliente #</h2>
+                </div>
+
+                <form class="form-cliente" id="formCliente">
+                    <div class="form-group">
+                        <label for="nomeCliente">Nome Completo:</label>
+                        <input type="text" id="nomeCliente" name="nomeCliente" required placeholder="Digite o nome do cliente">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contato">E-mail:</label>
+                            <input type="email" id="contato" name="contato" required placeholder="Ex: exemplo@email.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="documento">CPF/CNPJ:</label>
+                            <input type="text" id="documento" name="documento" required placeholder="Digite o documento">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="btnSalvar">Salvar Alterações</button>
+                        <a href="/clientes" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <script type="module">
+            import apiService from '/js/api/api.service.js';
+
+            async function carregarDados() {
+                const loading = document.getElementById('loading-editar');
+                const conteudo = document.getElementById('conteudoForm');
+                
+                const path = window.location.pathname;
+                const segments = path.split('/').filter(Boolean);
+                const currentId = segments[1];
+
+                if (!currentId || !loading) return;
+
+                try {
+                    const cliente = await apiService.buscarCliente(currentId);
+                    
+                    if (loading) loading.style.display = 'none';
+                    if (conteudo) {
+                        conteudo.style.display = 'block';
+                        document.getElementById('tituloEditar').textContent = `Editar Cliente #${cliente.idCliente}`;
+                        document.getElementById('nomeCliente').value = cliente.nomeCliente;
+                        document.getElementById('contato').value = cliente.contato || '';
+                        document.getElementById('documento').value = cliente.documento || '';
+                    }
+
+                    const form = document.getElementById('formCliente');
+                    if (form) {
+                        form.onsubmit = async (e) => {
+                            e.preventDefault();
+                            const btnSalvar = document.getElementById('btnSalvar');
+                            btnSalvar.disabled = true;
+                            btnSalvar.textContent = 'Salvando...';
+
+                            const dados = {
+                                nomeCliente: document.getElementById('nomeCliente').value,
+                                contato: document.getElementById('contato').value,
+                                documento: document.getElementById('documento').value
+                            };
+
+                            try {
+                                await apiService.atualizarCliente(currentId, dados);
+                                alert('Cliente atualizado com sucesso!');
+                                if (window.navigateTo) window.navigateTo('/clientes');
+                                else window.location.href = '/clientes';
+                            } catch (error) {
+                                console.error('Erro:', error);
+                                alert('Erro ao atualizar: ' + error.message);
+                            } finally {
+                                btnSalvar.disabled = false;
+                                btnSalvar.textContent = 'Salvar Alterações';
+                            }
+                        };
+                    }
+
+                } catch (error) {
+                    console.error('Erro:', error);
+                    if (loading) loading.innerHTML = `<p style="color:red">Erro ao carregar dados: ${error.message}</p>`;
+                }
+            }
+
+            carregarDados();
+        </script>
+    </main>
 </body>
 </html>
+
+

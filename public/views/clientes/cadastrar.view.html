@@ -1,18 +1,63 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cadastrar Cliente</title>
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/cliente.css">
-</head>
-<body>
-  <main>
-    <section class="clientes-section">
-      <h2>Cadastrar Cliente</h2>
-      <!-- formulário de cadastro aqui -->
-    </section>
-  </main>
-</body>
-</html>
+<section class="clientes-section">
+    <div class="section-header">
+        <h2>Cadastrar Novo Cliente</h2>
+    </div>
+
+    <form class="form-cliente" id="formCliente">
+        <div class="form-group">
+            <label for="nomeCliente">Nome Completo:</label>
+            <input type="text" id="nomeCliente" name="nomeCliente" required placeholder="Digite o nome do cliente">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="contato">E-mail:</label>
+                <input type="email" id="contato" name="contato" required placeholder="Ex: exemplo@email.com">
+            </div>
+
+            <div class="form-group">
+                <label for="documento">CPF/CNPJ:</label>
+                <input type="text" id="documento" name="documento" required placeholder="Digite o documento">
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="btnSalvar">Salvar Cliente</button>
+            <a href="/clientes" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</section>
+
+<script type="module">
+    import apiService from '/js/api/api.service.js';
+
+    const form = document.getElementById('formCliente');
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btnSalvar = document.getElementById('btnSalvar');
+            btnSalvar.disabled = true;
+            btnSalvar.textContent = 'Salvando...';
+
+            const dados = {
+                nomeCliente: document.getElementById('nomeCliente').value,
+                contato: document.getElementById('contato').value,
+                documento: document.getElementById('documento').value
+            };
+
+            try {
+                await apiService.criarCliente(dados);
+                alert('Cliente cadastrado com sucesso!');
+                if (window.navigateTo) window.navigateTo('/clientes');
+                else window.location.href = '/clientes';
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao cadastrar cliente: ' + error.message);
+            } finally {
+                btnSalvar.disabled = false;
+                btnSalvar.textContent = 'Salvar Cliente';
+            }
+        });
+    }
+</script>
+

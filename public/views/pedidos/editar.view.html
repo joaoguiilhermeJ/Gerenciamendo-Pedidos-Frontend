@@ -1,18 +1,108 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editar Pedido</title>
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/pedido.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Pedido</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/pedido.css">
 </head>
 <body>
-  <main>
-    <section class="pedidos-section">
-      <h2>Editar Pedido</h2>
-      <!-- formulário de edição aqui -->
-    </section>
-  </main>
+    <main>
+        <section class="pedidos-section">
+            <div id="loading-editar-pedido" class="text-center">Carregando dados do pedido...</div>
+            
+            <div id="conteudoFormPedido" style="display: none;">
+                <div class="section-header">
+                    <h2 id="tituloEditarPedido">Editar Pedido #</h2>
+                </div>
+
+                <form class="form-pedido" id="formEditarPedido">
+                    <div class="form-group">
+                        <label for="idCliente">Cliente:</label>
+                        <input type="text" id="clienteDisplay" disabled style="background-color: #f1f5f9; cursor: not-allowed; width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: var(--radius);">
+                        <small>O cliente não pode ser alterado através da edição.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="local">Local da Entrega:</label>
+                        <input type="text" id="local" name="local" required placeholder="Digite o novo local da entrega">
+                    </div>
+
+                    <div class="info-group" style="background-color: #fefce8; padding: 15px; border-radius: 8px; border-left: 4px solid #facc15; margin: 20px 0;">
+                        <p style="color: #854d0e; font-size: 0.9rem; margin: 0;"><strong>Aviso:</strong> Para manter a integridade do estoque e dos registros financeiros, a alteração de produtos, quantidades e clientes deve ser feita criando um novo pedido.</p>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="btnSalvar">Salvar Alterações</button>
+                        <a href="/pedidos" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <script type="module">
+            import apiService from '/js/api/api.service.js';
+
+            async function carregarDados() {
+                const loading = document.getElementById('loading-editar-pedido');
+                const conteudo = document.getElementById('conteudoFormPedido');
+                
+                const path = window.location.pathname;
+                const segments = path.split('/').filter(Boolean);
+                let currentOrderId = segments[1];
+
+                if (!currentOrderId || !loading) return;
+
+                try {
+                    const data = await apiService.buscarPedido(currentOrderId);
+                    const pedido = data.pedido || data;
+
+                    if (loading) loading.style.display = 'none';
+                    if (conteudo) {
+                        conteudo.style.display = 'block';
+                        document.getElementById('tituloEditarPedido').textContent = `Editar Pedido #${pedido.idPedido}`;
+                        document.getElementById('clienteDisplay').value = pedido.Cliente ? pedido.Cliente.nomeCliente : (pedido.nomeCliente || 'Cliente #' + pedido.idCliente);
+                        document.getElementById('local').value = pedido.local || '';
+                    }
+
+                    const form = document.getElementById('formEditarPedido');
+                    if (form) {
+                        form.onsubmit = async (e) => {
+                            e.preventDefault();
+                            const btnSalvar = document.getElementById('btnSalvar');
+                            btnSalvar.disabled = true;
+                            btnSalvar.textContent = 'Salvando...';
+
+                            const dados = {
+                                local: document.getElementById('local').value
+                            };
+
+                            try {
+                                await apiService.atualizarPedido(currentOrderId, dados);
+                                alert('Local de entrega atualizado com sucesso!');
+                                if (window.navigateTo) window.navigateTo('/pedidos');
+                                else window.location.href = '/pedidos';
+                            } catch (error) {
+                                console.error('Erro:', error);
+                                alert('Erro ao atualizar: ' + error.message);
+                            } finally {
+                                btnSalvar.disabled = false;
+                                btnSalvar.textContent = 'Salvar Alterações';
+                            }
+                        };
+                    }
+
+                } catch (error) {
+                    console.error('Erro:', error);
+                    if (loading) loading.innerHTML = `<p style="color:red">Erro ao carregar dados: ${error.message}</p>`;
+                }
+            }
+
+            carregarDados();
+        </script>
+    </main>
 </body>
 </html>
+
+

@@ -1,86 +1,107 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Listar Clientes</title>
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/cliente.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Clientes</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/cliente.css">
 </head>
 <body>
-  <main>
-    <section class="clientes-section">
-      <div class="section-header">
-        <h2>Lista de Clientes</h2>
-        <a href="/clientes/cadastrar" class="btn btn-primary">+ Novo Cliente</a>
-      </div>
+    <main>
+        <section class="clientes-section">
+            <div class="section-header">
+                <h2>Lista de Clientes</h2>
+                <a href="/clientes/cadastrar" class="btn btn-primary">+ Novo Cliente</a>
+            </div>
 
-      <div class="table-container" style="display: none;">
-        <table class="table table-clientes">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nome</th>
-              <th>Contato</th>
-              <th>Documento</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+            <div id="loading" class="text-center">Carregando clientes...</div>
 
-      <div class="empty-state" style="display: none;">
-        <p>Nenhum cliente cadastrado.</p>
-        <a href="/clientes/cadastrar" class="btn btn-primary">Criar Cliente</a>
-      </div>
-    </section>
-  </main>
+            <div class="table-container" id="tableContainer" style="display: none;">
+                <table class="table table-clientes">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Contato</th>
+                            <th>Documento</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientesTableBody">
+                        <!-- Preenchido via JS -->
+                    </tbody>
+                </table>
+            </div>
 
-  <script type="module">
-    import apiService from '/js/api/api.service.js';
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <p>Nenhum cliente cadastrado.</p>
+                <a href="/clientes/cadastrar" class="btn btn-primary">Criar Primeiro Cliente</a>
+            </div>
+        </section>
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      const tableBody = document.querySelector('.table-clientes tbody');
-      const emptyState = document.querySelector('.empty-state');
-      const tableContainer = document.querySelector('.table-container');
+        <script type="module">
+            import apiService from '/js/api/api.service.js';
 
-      try {
-        const clientes = await apiService.listarClientes();
-        if (clientes && clientes.length > 0) {
-          if (emptyState) emptyState.style.display = 'none';
-          if (tableContainer) tableContainer.style.display = 'block';
-          let html = '';
-          clientes.forEach(cliente => {
-            html += `
-              <tr>
-                <td>${cliente.idCliente}</td>
-                <td>${cliente.nomeCliente}</td>
-                <td>${cliente.contato}</td>
-                <td>${cliente.documento}</td>
-                <td class="actions">
-                  <a href="/clientes/${cliente.idCliente}/editar" class="btn btn-warning btn-small">Editar</a>
-                  <button class="btn btn-danger btn-small delete-btn" data-id="${cliente.idCliente}">Deletar</button>
-                </td>
-              </tr>
-            `;
-          });
-          if (tableBody) { tableBody.innerHTML = html; attachDeleteListeners(); }
-        } else { if (tableContainer) tableContainer.style.display = 'none'; if (emptyState) emptyState.style.display = 'block'; }
-      } catch (error) { console.error('Erro ao carregar clientes:', error); alert('Erro ao carregar a lista de clientes: ' + error.message); }
-    });
+            async function carregarClientes() {
+                const loading = document.getElementById('loading');
+                const tableContainer = document.getElementById('tableContainer');
+                const emptyState = document.getElementById('emptyState');
+                const tbody = document.getElementById('clientesTableBody');
 
-    function attachDeleteListeners() {
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', async function () {
-          const id = this.dataset.id;
-          if (confirm('Confirmar exclusão deste cliente?')) {
-            try { await apiService.deletarCliente(id); alert('Cliente deletado com sucesso!'); location.reload(); }
-            catch (error) { console.error('Erro:', error); alert('Erro ao deletar cliente: ' + error.message); }
-          }
-        });
-      });
-    }
-  </script>
+                if (!loading || !tableContainer || !tbody) return;
+
+                try {
+                    const clientes = await apiService.listarClientes();
+                    loading.style.display = 'none';
+
+                    if (clientes && clientes.length > 0) {
+                        tableContainer.style.display = 'block';
+                        emptyState.style.display = 'none';
+                        tbody.innerHTML = '';
+                        clientes.forEach(cliente => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${cliente.idCliente}</td>
+                                <td>${cliente.nomeCliente}</td>
+                                <td>${cliente.contato || 'N/A'}</td>
+                                <td>${cliente.documento || 'N/A'}</td>
+                                <td class="actions">
+                                    <a href="/clientes/${cliente.idCliente}/editar" class="btn btn-warning btn-small">Editar</a>
+                                    <button class="btn btn-danger btn-small btn-delete-cliente" data-id="${cliente.idCliente}">Deletar</button>
+                                </td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+
+                        document.querySelectorAll('.btn-delete-cliente').forEach(btn => {
+                            btn.onclick = async function() {
+                                const id = this.dataset.id;
+                                if (confirm('Tem certeza que deseja deletar este cliente?')) {
+                                    try {
+                                        await apiService.deletarCliente(id);
+                                        alert('Cliente deletado com sucesso!');
+                                        carregarClientes();
+                                    } catch (error) {
+                                        alert('Erro ao deletar: ' + error.message);
+                                    }
+                                }
+                            };
+                        });
+                    } else {
+                        tableContainer.style.display = 'none';
+                        emptyState.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error('Erro:', error);
+                    if (loading) loading.innerHTML = `<p style="color:red">Erro ao carregar: ${error.message}</p>`;
+                }
+            }
+
+            carregarClientes();
+        </script>
+    </main>
 </body>
 </html>
+
+

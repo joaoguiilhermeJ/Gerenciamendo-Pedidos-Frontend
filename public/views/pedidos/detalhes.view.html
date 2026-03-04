@@ -1,18 +1,174 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Detalhes do Pedido</title>
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/pedido.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Pedido</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/pedido.css">
 </head>
 <body>
-  <main>
-    <section class="pedidos-section">
-      <h2>Detalhes do Pedido</h2>
-      <!-- informações detalhadas do pedido -->
-    </section>
-  </main>
+    <main>
+        <section class="pedidos-section">
+            <div id="loading-detalhes" class="text-center">Carregando detalhes do pedido...</div>
+            
+            <div id="conteudoPedido" style="display: none;">
+                <div class="section-header">
+                    <h2 id="tituloPedido">Detalhes do Pedido #</h2>
+                </div>
+
+                <div class="pedido-detalhes">
+                    <div class="info-group">
+                        <div class="info-item">
+                            <label>ID do Pedido:</label>
+                            <span id="idPedidoEl">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Cliente:</label>
+                            <span id="clienteNomeEl">-</span>
+                        </div>
+                    </div>
+
+                    <div class="info-group">
+                        <div class="info-item">
+                            <label>Data do Pedido:</label>
+                            <span id="dataPedidoEl">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Status:</label>
+                            <span id="statusPedidoEl" class="status">-</span>
+                        </div>
+                    </div>
+
+                    <div class="section-itens">
+                        <h3>Itens do Pedido</h3>
+                        <div class="table-container" id="tableItensContainer">
+                            <table class="table table-itens">
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Quantidade</th>
+                                        <th>Preço Unitário</th>
+                                        <th>Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itensTableBody">
+                                    <!-- Preenchido via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <p id="noItensMessage" class="empty-state" style="display: none;">Este pedido não possui itens.</p>
+                    </div>
+
+                    <div class="resumo-pedido">
+                        <div class="resumo-item total">
+                            <label>Valor Total:</label>
+                            <span id="valorTotalEl">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <div class="form-actions" id="actionsPedido">
+                        <button id="btnEditar" class="btn btn-warning">Editar Pedido</button>
+                        <button id="btnDeletar" class="btn btn-danger">Deletar Pedido</button>
+                        <a href="/pedidos" class="btn btn-secondary">Voltar</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <script type="module">
+            import apiService from '/js/api/api.service.js';
+
+            async function carregarDetalhes() {
+                const loading = document.getElementById('loading-detalhes');
+                const conteudo = document.getElementById('conteudoPedido');
+                
+                const path = window.location.pathname;
+                const segments = path.split('/').filter(Boolean);
+                let orderId = segments[1];
+
+                if (!orderId || !loading) return;
+
+                try {
+                    const data = await apiService.buscarPedido(orderId);
+                    const pedido = data.pedido || data;
+                    const itens = data.itens || pedido.Itens || [];
+
+                    if (loading) loading.style.display = 'none';
+                    if (conteudo) {
+                        conteudo.style.display = 'block';
+                        document.getElementById('tituloPedido').textContent = `Detalhes do Pedido #${pedido.idPedido}`;
+                        document.getElementById('idPedidoEl').textContent = pedido.idPedido;
+                        document.getElementById('clienteNomeEl').textContent = pedido.Cliente ? pedido.Cliente.nomeCliente : (pedido.nomeCliente || 'Cliente #' + pedido.idCliente);
+                        document.getElementById('dataPedidoEl').textContent = pedido.horaPedido ? new Date(pedido.horaPedido).toLocaleString('pt-BR') : 'N/A';
+                        
+                        const statusEl = document.getElementById('statusPedidoEl');
+                        if (statusEl) {
+                            statusEl.textContent = pedido.horaEntrega ? 'Entregue' : 'Pendente';
+                            statusEl.className = `status status-${pedido.horaEntrega ? 'entregue' : 'pendente'}`;
+                        }
+
+                        const tbody = document.getElementById('itensTableBody');
+                        if (itens && itens.length > 0) {
+                            document.getElementById('tableItensContainer').style.display = 'block';
+                            document.getElementById('noItensMessage').style.display = 'none';
+                            tbody.innerHTML = '';
+                            itens.forEach(item => {
+                                const tr = document.createElement('tr');
+                                const vUnit = Number(item.valorUnitario || item.valor || 0);
+                                const sub = item.quantidade * vUnit;
+                                tr.innerHTML = `
+                                    <td>${item.produto_nome || item.Produto?.nomeProduto || 'Produto #' + item.idProduto}</td>
+                                    <td>${item.quantidade}</td>
+                                    <td>R$ ${vUnit.toFixed(2)}</td>
+                                    <td>R$ ${sub.toFixed(2)}</td>
+                                `;
+                                tbody.appendChild(tr);
+                            });
+                        } else {
+                            document.getElementById('tableItensContainer').style.display = 'none';
+                            document.getElementById('noItensMessage').style.display = 'block';
+                        }
+
+                        const valorTotalEl = document.getElementById('valorTotalEl');
+                        if (valorTotalEl) {
+                            valorTotalEl.textContent = `R$ ${(pedido.valorTotal || 0).toFixed(2)}`;
+                        }
+
+                        // Botoes
+                        const btnEditar = document.getElementById('btnEditar');
+                        if (btnEditar) {
+                            btnEditar.onclick = () => {
+                                if (window.navigateTo) window.navigateTo(`/pedidos/${pedido.idPedido}/editar`);
+                            };
+                        }
+
+                        const btnDeletar = document.getElementById('btnDeletar');
+                        if (btnDeletar) {
+                            btnDeletar.onclick = async () => {
+                                if (confirm('Tem certeza que deseja deletar este pedido?')) {
+                                    try {
+                                        await apiService.cancelarPedido(pedido.idPedido);
+                                        alert('Pedido deletado com sucesso!');
+                                        if (window.navigateTo) window.navigateTo('/pedidos');
+                                    } catch (error) {
+                                        alert('Erro ao deletar pedido: ' + error.message);
+                                    }
+                                }
+                            };
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Erro:', error);
+                    if (loading) loading.innerHTML = `<p style="color:red">Erro ao carregar pedido: ${error.message}</p>`;
+                }
+            }
+
+            carregarDetalhes();
+        </script>
+    </main>
 </body>
 </html>
+
+
