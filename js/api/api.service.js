@@ -54,15 +54,23 @@ class APIService {
 
       return await response.json().catch(() => null);
     } catch (error) {
-      console.error("Erro na requisição:", error);
+      console.error(`[API FETCH ERROR] URL: ${url}`);
+      console.error(`[API FETCH ERROR] Method: ${options.method || 'GET'}`);
+      console.error(`[API FETCH ERROR] Headers:`, options.headers);
+      console.error(`[API FETCH ERROR] Detalhes do erro:`, error);
+
       if (
         error instanceof TypeError &&
         (error.message.includes("fetch") ||
           error.message.includes("Network") ||
-          error.message.includes("Failed to fetch"))
+          error.message.includes("Failed to fetch") ||
+          error.message.includes("CORS"))
       ) {
         throw new Error(
-          "Não foi possível conectar ao servidor. O microserviço pode estar fora do ar.",
+          `Erro de rede ao conectar à API.
+          URL: ${url}
+          Detalhe do erro original: ${error.message}
+          Verifique se a API está no ar e se há bloqueio de CORS.`,
         );
       }
       throw error;

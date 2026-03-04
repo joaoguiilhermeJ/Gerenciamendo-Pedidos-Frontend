@@ -1,8 +1,14 @@
+const rawBaseUrl =
+  (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
+  "https://gp-api-gateway.onrender.com/api/v1";
+
+const rawApiKey =
+  (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_KEY) ||
+  "IFPIpantera3324JJM";
+
 const API_CONFIG = {
-  BASE_URL:
-    import.meta.env.VITE_API_BASE ||
-    "https://gp-api-gateway.onrender.com/api/v1",
-  API_KEY: import.meta.env.VITE_API_KEY || "IFPIpantera3324JJM",
+  BASE_URL: rawBaseUrl.replace(/\/$/, ""),
+  API_KEY: rawApiKey,
 
   getHeaders() {
     return {
